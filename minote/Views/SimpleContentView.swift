@@ -62,6 +62,13 @@ struct SimpleContentView: View {
                 EditRecordView(record: record)
             }
         }
+        .onChange(of: showingEditRecord) { oldValue, newValue in
+            // 当编辑界面关闭时，刷新数据并重置状态
+            if oldValue && !newValue {
+                recordToEdit = nil // 重置选中的记录
+                refreshData()
+            }
+        }
         .onAppear {
             // 视图出现时加载数据
             loadDataFromHealthKit()

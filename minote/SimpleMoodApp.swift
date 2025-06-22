@@ -3,30 +3,6 @@ import SwiftData
 import Foundation
 import HealthKit
 
-// 临时的 Mock 类，用于解决编译问题
-class MockHealthKitManager: ObservableObject {
-    @Published var isHealthKitAvailable: Bool = true
-    @Published var isAuthorized: Bool = false
-    
-    func requestAuthorization() async {}
-    func openHealthApp() {}
-    func saveMood(mood: String, startTime: Date, endTime: Date, note: String, tags: [String]) async -> Bool { return true }
-    func deleteMood(id: String) async -> Bool { return true }
-    func loadMoodRecords() async -> [MoodRecord] { return [] }
-    
-    // 同步本地记录到HealthKit
-    func syncLocalRecordsToHealthKit(records: [MoodRecord]) async -> (success: Int, failed: Int) {
-        // Mock实现 - 模拟同步成功
-        return (success: records.count, failed: 0)
-    }
-    
-    // 从HealthKit导入记录到本地
-    func importHealthKitRecordsToLocal() async -> [MoodRecord] {
-        // Mock实现 - 返回空数组
-        return []
-    }
-}
-
 /*
  应用的主入口文件
  

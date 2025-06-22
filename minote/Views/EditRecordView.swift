@@ -7,6 +7,8 @@ struct EditRecordView: View {
     @Environment(\.modelContext) private var modelContext
     // 关闭页面的方法
     @Environment(\.dismiss) private var dismiss
+    // HealthKit管理器
+    @EnvironmentObject var healthKitManager: HealthKitMoodManager
     
     // 查询自定义标签
     @Query private var customMoodTags: [CustomMoodTag]
@@ -23,19 +25,24 @@ struct EditRecordView: View {
     @State private var selectedActivity: String
     @State private var selectedActivityIcon: String
     
+    // HealthKit状态检查
+    @State private var healthKitMoodExists = false
+    @State private var isCheckingHealthKit = true
+    
     // 控制删除确认对话框和添加标签弹窗
     @State private var showingDeleteAlert = false
     @State private var showingAddMoodTag = false
     @State private var showingAddActivityTag = false
+    @State private var showingMoodRecording = false
     
-    // 预定义的心情选项
+    // 预定义的心情选项 - 使用系统颜色名称
     private let moods = [
-        ("开心", "#FFD700"),
-        ("平静", "#87CEEB"),
-        ("难过", "#708090"),
-        ("生气", "#FF6347"),
-        ("焦虑", "#DDA0DD"),
-        ("兴奋", "#FF69B4")
+        ("开心", "yellow"),
+        ("平静", "blue"),
+        ("难过", "gray"),
+        ("生气", "red"),
+        ("焦虑", "purple"),
+        ("兴奋", "pink")
     ]
     
     // 预定义的活动选项
@@ -65,6 +72,60 @@ struct EditRecordView: View {
     var body: some View {
         NavigationView {
             Form {
+                // HealthKit 心情记录状态
+                Section {
+                    if isCheckingHealthKit {
+                        HStack {
+                            ProgressView()
+                                .scaleEffect(0.8)
+                            Text("检查 HealthKit 心情记录...")
+                                .foregroundColor(.secondary)
+                        }
+                    } else if healthKitMoodExists {
+                        HStack {
+                            Image(systemName: "checkmark.circle.fill")
+                                .foregroundColor(.green)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("HealthKit 心情已记录")
+                                    .font(.body)
+                                Text("时间段内已有心情数据")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+                        }
+                    } else {
+                        VStack(spacing: 12) {
+                            HStack {
+                                Image(systemName: "exclamationmark.triangle.fill")
+                                    .foregroundColor(.orange)
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text("HealthKit 心情未记录")
+                                        .font(.body)
+                                    Text("建议记录心情到 HealthKit 以保持数据同步")
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                }
+                            }
+                            
+                            Button(action: {
+                                showingMoodRecording = true
+                            }) {
+                                HStack {
+                                    Image(systemName: "heart.fill")
+                                    Text("记录心情到 HealthKit")
+                                }
+                                .foregroundColor(.white)
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 8)
+                                .background(Color.blue)
+                                .cornerRadius(8)
+                            }
+                        }
+                    }
+                } header: {
+                    Text("HealthKit 同步状态")
+                }
+                
                 // 时间设置部分
                 Section("时间设置") {
                     DatePicker("开始时间", selection: $startTime, displayedComponents: [.date, .hourAndMinute])
@@ -242,6 +303,20 @@ struct EditRecordView: View {
                 selectedActivityIcon = newTag.icon
             }
         }
+        // 心情记录弹窗
+        .sheet(isPresented: $showingMoodRecording) {
+            InAppMoodRecordingView()
+                .environmentObject(healthKitManager)
+        }
+        .onAppear {
+            checkHealthKitMoodStatus()
+        }
+        .onChange(of: showingMoodRecording) { oldValue, newValue in
+            // 当心情记录界面关闭时，重新检查状态
+            if oldValue && !newValue {
+                checkHealthKitMoodStatus()
+            }
+        }
     }
     
     // 保存修改的方法
@@ -265,6 +340,23 @@ struct EditRecordView: View {
         modelContext.delete(record)
         // 关闭页面
         dismiss()
+    }
+    
+    // 检查HealthKit中是否有对应时间段的心情记录
+    private func checkHealthKitMoodStatus() {
+        isCheckingHealthKit = true
+        
+        Task {
+            let exists = await healthKitManager.checkMoodExistsInTimeRange(
+                startTime: record.startTime,
+                endTime: record.endTime
+            )
+            
+            await MainActor.run {
+                healthKitMoodExists = exists
+                isCheckingHealthKit = false
+            }
+        }
     }
 }
 

@@ -23,6 +23,9 @@ struct SettingsView: View {
     @State private var alertTitle = ""
     // HealthKit同步状态
     @State private var isSyncing = false
+    // 导入预览相关
+    @State private var showingImportPreview = false
+    @State private var previewImportResult: (imported: [MoodRecord], skipped: Int)? = nil
     
     var body: some View {
         NavigationView {
@@ -352,6 +355,52 @@ struct SettingsView: View {
         } message: {
             Text(alertMessage)
         }
+        // 导入预览对话框
+        .sheet(isPresented: $showingImportPreview) {
+            ImportPreviewView(
+                importResult: previewImportResult ?? (imported: [], skipped: 0),
+                onConfirm: {
+                    performActualImport()
+                },
+                onCancel: {
+                    previewImportResult = nil
+                }
+            )
+        }
+    }
+    
+    /// 执行实际导入
+    private func performActualImport() {
+        guard let importResult = previewImportResult else { return }
+        
+        do {
+            // 将导入的记录添加到数据库
+            for record in importResult.imported {
+                modelContext.insert(record)
+            }
+            
+            // 尝试保存到数据库
+            try modelContext.save()
+            
+            // 构建导入结果消息
+            var resultMessage = "✅ 成功导入 \(importResult.imported.count) 条新记录"
+            if importResult.skipped > 0 {
+                resultMessage += "\n\n⚠️ 智能跳过 \(importResult.skipped) 条重复记录"
+                resultMessage += "\n\n重复检测帮助避免数据冗余，保持记录整洁。"
+            }
+            
+            alertTitle = "导入成功"
+            alertMessage = resultMessage
+            showingAlert = true
+            
+            // 清理预览数据
+            previewImportResult = nil
+            
+        } catch {
+            alertTitle = "导入失败"
+            alertMessage = "保存到数据库时出错: \(error.localizedDescription)"
+            showingAlert = true
+        }
     }
     
     // 计算总时长的字符串
@@ -447,24 +496,36 @@ struct SettingsView: View {
                     return
                 }
                 
-                // 解析CSV数据
-                let importedRecords = CSVHelper.importFromCSV(csvContent: csvContent)
+                // 解析CSV数据，带重复检测
+                print("🔍 开始导入验证，现有记录数量: \(records.count)")
                 
-                if importedRecords.isEmpty {
+                let importResult = CSVHelper.importFromCSVWithDuplicateCheck(
+                    csvContent: csvContent,
+                    existingRecords: records
+                )
+                
+                let importedRecords = importResult.imported
+                let skippedCount = importResult.skipped
+                
+                print("📊 导入结果: 新增 \(importedRecords.count) 条，跳过 \(skippedCount) 条重复")
+                
+                if importedRecords.isEmpty && skippedCount == 0 {
                     alertTitle = "导入完成"
                     alertMessage = "文件已处理，但没有找到有效的记录数据。请检查文件格式是否正确。"
                     showingAlert = true
                     return
                 }
                 
-                // 将导入的记录添加到数据库
-                for record in importedRecords {
-                    modelContext.insert(record)
+                if importedRecords.isEmpty && skippedCount > 0 {
+                    alertTitle = "导入完成"
+                    alertMessage = "文件中的 \(skippedCount) 条记录与现有数据重复，已智能跳过导入。\n\n重复检测标准:\n• 相同时间段（±1分钟）\n• 相同心情和活动\n• 相似备注内容"
+                    showingAlert = true
+                    return
                 }
                 
-                alertTitle = "导入成功"
-                alertMessage = "成功导入 \(importedRecords.count) 条记录"
-                showingAlert = true
+                // 显示导入预览
+                previewImportResult = importResult
+                showingImportPreview = true
                 
             } catch let error as NSError {
                 alertTitle = "导入失败"
@@ -583,5 +644,130 @@ struct CSVDocument: FileDocument {
     func fileWrapper(configuration: WriteConfiguration) throws -> FileWrapper {
         let data = content.data(using: .utf8)!
         return .init(regularFileWithContents: data)
+    }
+}
+
+// MARK: - 导入预览视图
+
+struct ImportPreviewView: View {
+    let importResult: (imported: [MoodRecord], skipped: Int)
+    let onConfirm: () -> Void
+    let onCancel: () -> Void
+    
+    var body: some View {
+        NavigationView {
+            VStack(spacing: 20) {
+                // 统计信息
+                VStack(spacing: 12) {
+                    HStack {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("新增记录")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                            Text("\(importResult.imported.count)")
+                                .font(.title2)
+                                .fontWeight(.bold)
+                                .foregroundColor(.green)
+                        }
+                        
+                        Spacer()
+                        
+                        VStack(alignment: .trailing, spacing: 4) {
+                            Text("跳过重复")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                            Text("\(importResult.skipped)")
+                                .font(.title2)
+                                .fontWeight(.bold)
+                                .foregroundColor(.orange)
+                        }
+                    }
+                    .padding()
+                    .background(Color(.systemGray6))
+                    .cornerRadius(12)
+                }
+                
+                // 记录列表预览
+                if !importResult.imported.isEmpty {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("即将导入的记录")
+                            .font(.headline)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        
+                        List {
+                            ForEach(Array(importResult.imported.prefix(10).enumerated()), id: \.offset) { index, record in
+                                VStack(alignment: .leading, spacing: 4) {
+                                    HStack {
+                                        Circle()
+                                            .fill(Color(record.moodColor))
+                                            .frame(width: 8, height: 8)
+                                        
+                                        Text(record.mood)
+                                            .font(.body)
+                                            .fontWeight(.medium)
+                                        
+                                        Spacer()
+                                        
+                                        Text(record.activity)
+                                            .font(.caption)
+                                            .foregroundColor(.secondary)
+                                    }
+                                    
+                                    Text(record.timeString)
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                    
+                                    if !record.note.isEmpty {
+                                        Text(record.note)
+                                            .font(.caption)
+                                            .foregroundColor(.secondary)
+                                            .lineLimit(2)
+                                    }
+                                }
+                                .padding(.vertical, 2)
+                            }
+                            
+                            if importResult.imported.count > 10 {
+                                Text("... 还有 \(importResult.imported.count - 10) 条记录")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                                    .italic()
+                            }
+                        }
+                        .listStyle(PlainListStyle())
+                    }
+                }
+                
+                if importResult.skipped > 0 {
+                    Text("重复检测标准: 相同时间段（±1分钟）、相同心情和活动、相似备注内容")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                        .multilineTextAlignment(.center)
+                        .padding()
+                        .background(Color(.systemGray6))
+                        .cornerRadius(8)
+                }
+                
+                Spacer()
+            }
+            .padding()
+            .navigationTitle("导入预览")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("取消") {
+                        onCancel()
+                    }
+                }
+                
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("确认导入") {
+                        onConfirm()
+                    }
+                    .fontWeight(.semibold)
+                    .disabled(importResult.imported.isEmpty)
+                }
+            }
+        }
     }
 }

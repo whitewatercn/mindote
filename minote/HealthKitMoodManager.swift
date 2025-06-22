@@ -1,7 +1,7 @@
 import Foundation
 import HealthKit
 import SwiftUI
-import UIKit
+
 
 /*
  HealthKit心情管理器 - 基于Apple官方State of Mind API实现
@@ -379,18 +379,45 @@ class HealthKitMoodManager: ObservableObject {
         return true
     }
     
-    // MARK: - 调试和诊断方法
+    // MARK: - 状态检查方法
     
-    /// 打印当前HealthKit状态（用于调试）
-    func printHealthKitStatus() {
-        print("📊 HealthKit状态报告:")
-        print("  - 设备支持: \(isHealthKitAvailable)")
-        print("  - 授权状态: \(authorizationStatus)")
-        print("  - 已授权: \(isAuthorized)")
-        print("  - 支持State of Mind: ✅ (iOS 18+)")
-        print("  - State of Mind授权: \(healthStore.authorizationStatus(for: stateOfMindType))")
+    /// 检查指定时间段内是否存在HealthKit心情记录
+    func checkMoodExistsInTimeRange(startTime: Date, endTime: Date) async -> Bool {
+        guard isAuthorized else {
+            print("❌ HealthKit未授权，无法检查数据")
+            return false
+        }
+        
+        // 创建时间范围查询条件
+        let predicate = HKQuery.predicateForSamples(
+            withStart: startTime,
+            end: endTime,
+            options: .strictStartDate
+        )
+        
+        return await withCheckedContinuation { continuation in
+            // 使用 limit: 1 只查询是否存在，提高性能
+            let query = HKSampleQuery(
+                sampleType: stateOfMindType as! HKSampleType,
+                predicate: predicate,
+                limit: 1,
+                sortDescriptors: nil
+            ) { _, samples, error in
+                if let error = error {
+                    print("❌ 检查HealthKit心情记录失败: \(error.localizedDescription)")
+                    continuation.resume(returning: false)
+                    return
+                }
+                
+                let exists = (samples?.count ?? 0) > 0
+                print("🔍 时间段 \(startTime) - \(endTime) 内HealthKit心情记录存在: \(exists)")
+                continuation.resume(returning: exists)
+            }
+            
+            healthStore.execute(query)
+        }
     }
-    
+
     // MARK: - 数据同步方法
     
     /// 同步本地记录到HealthKit
