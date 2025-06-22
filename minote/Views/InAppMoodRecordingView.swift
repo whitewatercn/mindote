@@ -371,7 +371,7 @@ struct InAppMoodRecordingView: View {
                     .padding(.horizontal, 32)
                 
                 if !reflection.isEmpty {
-                    Text(""\(reflection)"")
+                    Text("\"\(reflection)\"")
                         .font(.body)
                         .foregroundColor(.secondary)
                         .italic()

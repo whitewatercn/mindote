@@ -510,7 +510,7 @@ struct UnifiedRecordView: View {
         if moodSummary.contains("非常开心") || moodSummary.contains("Excited") || moodSummary.contains("Happy") {
             return ("非常开心", "green")
         } else if moodSummary.contains("开心") || moodSummary.contains("Pleasant") || moodSummary.contains("Content") {
-            return ("开心", "lightgreen")
+            return ("开心", "green")
         } else if moodSummary.contains("一般") || moodSummary.contains("Calm") || moodSummary.contains("Neutral") {
             return ("一般", "gray")
         } else if moodSummary.contains("难过") || moodSummary.contains("Sad") || moodSummary.contains("Unpleasant") {
@@ -521,7 +521,7 @@ struct UnifiedRecordView: View {
             // 根据valence值判断
             if let valence = recordedMoodValence {
                 if valence > 0.5 {
-                    return ("开心", "lightgreen")
+                    return ("开心", "green")
                 } else if valence > 0.0 {
                     return ("比较开心", "yellow")
                 } else if valence == 0.0 {

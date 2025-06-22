@@ -342,12 +342,12 @@ class HealthKitMoodManager: ObservableObject {
     func getMoodColor(for mood: String) -> String {
         switch mood {
         case "非常开心", "狂欢", "兴奋": return "green"
-        case "开心", "愉快", "满足": return "lightgreen"
+        case "开心", "愉快", "满足": return "green"
         case "比较开心", "轻松": return "yellow"
         case "一般", "平静", "中性": return "gray"
         case "有点难过", "轻微沮丧": return "orange"
         case "难过", "沮丧": return "red"
-        case "非常难过", "抑郁", "绝望": return "darkred"
+        case "非常难过", "抑郁", "绝望": return "red"
         default: return "blue"
         }
     }
