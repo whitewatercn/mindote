@@ -268,5 +268,182 @@ struct EditRecordView: View {
     }
 }
 
-// 添加心情标签视图（在EditRecordView中重复使用AddRecordView中的组件）
-// 这里可以直接使用AddRecordView中定义的AddMoodTagView和AddActivityTagView
+// MARK: - 组件定义
+
+/// 心情按钮组件
+struct MoodButton: View {
+    let title: String
+    let color: String
+    let isSelected: Bool
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            Text(title)
+                .font(.caption)
+                .foregroundColor(isSelected ? .white : .primary)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .background(isSelected ? Color(color) : Color(.systemGray6))
+                .cornerRadius(16)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16)
+                        .stroke(Color(color), lineWidth: 1)
+                )
+        }
+        .buttonStyle(PlainButtonStyle())
+    }
+}
+
+/// 活动按钮组件
+struct ActivityButton: View {
+    let title: String
+    let icon: String
+    let isSelected: Bool
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            HStack {
+                Image(systemName: icon)
+                    .font(.body)
+                    .frame(width: 16, height: 16)
+                Text(title)
+                    .font(.body)
+            }
+            .foregroundColor(isSelected ? .white : .primary)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            .background(isSelected ? Color.blue : Color(.systemGray6))
+            .cornerRadius(8)
+            .overlay(
+                RoundedRectangle(cornerRadius: 8)
+                    .stroke(isSelected ? Color.blue : Color(.systemGray4), lineWidth: 1)
+            )
+        }
+        .buttonStyle(PlainButtonStyle())
+    }
+}
+
+/// 添加心情标签视图
+struct AddMoodTagView: View {
+    let onSave: (CustomMoodTag) -> Void
+    @Environment(\.dismiss) private var dismiss
+    
+    @State private var tagName = ""
+    @State private var selectedColor = "blue"
+    
+    private let colorOptions = ["red", "blue", "green", "yellow", "orange", "purple", "pink", "gray"]
+    
+    var body: some View {
+        NavigationView {
+            VStack(spacing: 20) {
+                TextField("心情名称", text: $tagName)
+                    .textFieldStyle(RoundedBorderTextFieldStyle())
+                
+                Text("选择颜色")
+                    .font(.headline)
+                
+                LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 4), spacing: 12) {
+                    ForEach(colorOptions, id: \.self) { color in
+                        Button(action: {
+                            selectedColor = color
+                        }) {
+                            Circle()
+                                .fill(Color(color))
+                                .frame(width: 40, height: 40)
+                                .overlay(
+                                    Circle()
+                                        .stroke(selectedColor == color ? Color.black : Color.clear, lineWidth: 2)
+                                )
+                        }
+                    }
+                }
+                
+                Spacer()
+            }
+            .padding()
+            .navigationTitle("添加心情标签")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("取消") {
+                        dismiss()
+                    }
+                }
+                
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("保存") {
+                        let newTag = CustomMoodTag(name: tagName, color: selectedColor)
+                        onSave(newTag)
+                        dismiss()
+                    }
+                    .disabled(tagName.isEmpty)
+                }
+            }
+        }
+    }
+}
+
+/// 添加活动标签视图
+struct AddActivityTagView: View {
+    let onSave: (CustomActivityTag) -> Void
+    @Environment(\.dismiss) private var dismiss
+    
+    @State private var tagName = ""
+    @State private var selectedIcon = "star.fill"
+    
+    private let iconOptions = [
+        "star.fill", "heart.fill", "sun.max.fill", "moon.fill",
+        "cloud.fill", "flame.fill", "drop.fill", "leaf.fill",
+        "music.note", "camera.fill", "paintbrush.fill", "hammer.fill"
+    ]
+    
+    var body: some View {
+        NavigationView {
+            VStack(spacing: 20) {
+                TextField("活动名称", text: $tagName)
+                    .textFieldStyle(RoundedBorderTextFieldStyle())
+                
+                Text("选择图标")
+                    .font(.headline)
+                
+                LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 4), spacing: 12) {
+                    ForEach(iconOptions, id: \.self) { icon in
+                        Button(action: {
+                            selectedIcon = icon
+                        }) {
+                            Image(systemName: icon)
+                                .font(.title2)
+                                .foregroundColor(selectedIcon == icon ? .white : .blue)
+                                .frame(width: 50, height: 50)
+                                .background(selectedIcon == icon ? Color.blue : Color(.systemGray6))
+                                .cornerRadius(8)
+                        }
+                    }
+                }
+                
+                Spacer()
+            }
+            .padding()
+            .navigationTitle("添加活动标签")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("取消") {
+                        dismiss()
+                    }
+                }
+                
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("保存") {
+                        let newTag = CustomActivityTag(name: tagName, icon: selectedIcon)
+                        onSave(newTag)
+                        dismiss()
+                    }
+                    .disabled(tagName.isEmpty)
+                }
+            }
+        }
+    }
+}

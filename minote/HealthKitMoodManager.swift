@@ -114,28 +114,47 @@ class HealthKitMoodManager: ObservableObject {
         }
     }
     
-    // MARK: - 系统界面调用（Apple官方推荐方式）
+    // MARK: - 应用内心情记录界面
     
-    /// 打开系统健康应用进行心情记录
-    /// 这是Apple推荐的方式，让用户使用原生界面
-    func openHealthApp() {
+    /// 在应用内弹出心情记录界面
+    /// 这会返回一个 SwiftUI 视图，用于在应用内记录心情
+    func openInAppMoodRecording() -> Bool {
         guard isHealthKitAvailable else {
-            print("❌ HealthKit不可用，无法打开健康应用")
-            return
+            print("❌ HealthKit不可用，无法记录心情")
+            return false
         }
         
-        // 使用URL Scheme打开健康应用
-        // 这是目前打开Health应用的标准方式
-        if let url = URL(string: "x-apple-health://") {
-            DispatchQueue.main.async {
-                UIApplication.shared.open(url, options: [:]) { success in
-                    if success {
-                        print("✅ 已打开健康应用，用户可以记录心情")
-                    } else {
-                        print("❌ 无法打开健康应用")
-                    }
-                }
-            }
+        guard isAuthorized else {
+            print("❌ HealthKit未授权，无法记录心情")
+            return false
+        }
+        
+        print("✅ 准备在应用内打开心情记录界面")
+        return true
+    }
+    
+    /// 保存心情到 HealthKit（应用内记录）
+    func saveInAppMood(valence: Double, reflection: String? = nil) async -> Bool {
+        guard isAuthorized else {
+            print("❌ HealthKit未授权，无法保存心情")
+            return false
+        }
+        
+        do {
+            // 创建 State of Mind 样本
+            let sample = try createStateOfMindSampleWithValence(
+                valence: valence,
+                reflection: reflection
+            )
+            
+            // 保存到 HealthKit
+            try await healthStore.save(sample)
+            print("✅ 成功保存心情数据到HealthKit (valence: \(valence))")
+            return true
+            
+        } catch {
+            print("❌ 保存心情数据失败: \(error.localizedDescription)")
+            return false
         }
     }
     
@@ -338,6 +357,51 @@ class HealthKitMoodManager: ObservableObject {
             end: endTime,
             metadata: metadata.isEmpty ? nil : metadata
         )
+    }
+    
+    /// 创建 State of Mind 样本（使用数值型 valence）
+    /// valence: -1.0 到 1.0，-1.0 = 非常不愉快，1.0 = 非常愉快
+    private func createStateOfMindSampleWithValence(
+        valence: Double,
+        reflection: String? = nil
+    ) throws -> HKCategorySample {
+        
+        // 将 valence (-1.0 到 1.0) 映射到 HealthKit 的 1-5 值
+        let stateOfMindValue = mapValenceToStateOfMindValue(valence)
+        
+        // 构建元数据
+        var metadata: [String: Any] = [:]
+        
+        // 添加反思内容
+        if let reflection = reflection, !reflection.isEmpty {
+            metadata["reflection"] = reflection
+        }
+        
+        // 添加原始 valence 值
+        metadata["valence"] = valence
+        
+        // 添加应用标识
+        metadata["source_app"] = "MinNote"
+        
+        let now = Date()
+        return HKCategorySample(
+            type: stateOfMindType,
+            value: stateOfMindValue,
+            start: now,
+            end: now,
+            metadata: metadata.isEmpty ? nil : metadata
+        )
+    }
+    
+    /// 将 valence 值(-1.0 到 1.0)映射到 HealthKit State of Mind 值(1-5)
+    private func mapValenceToStateOfMindValue(_ valence: Double) -> Int {
+        // 确保 valence 在有效范围内
+        let clampedValence = max(-1.0, min(1.0, valence))
+        
+        // 映射到 1-5 范围
+        // -1.0 -> 1, -0.5 -> 2, 0.0 -> 3, 0.5 -> 4, 1.0 -> 5
+        let mapped = (clampedValence + 1.0) * 2.0 + 1.0
+        return Int(round(mapped))
     }
     
     /// 将应用的心情字符串映射到HealthKit State of Mind值

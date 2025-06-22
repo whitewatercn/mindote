@@ -95,7 +95,7 @@ struct SimpleContentView: View {
                 .shadow(color: .blue.opacity(0.3), radius: 10, x: 0, y: 5)
             }
             
-            Text("记录时间段和事件，点击心情标签时使用系统原生功能")
+            Text("记录时间段和事件，点击心情按钮在应用内记录")
                 .font(.caption)
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
