@@ -1,6 +1,7 @@
 // 添加记录界面 - 用户添加新的心情记录
 import SwiftUI
 import SwiftData
+import HealthKit
 
 struct AddRecordView: View {
     // 数据库上下文
@@ -19,7 +20,7 @@ struct AddRecordView: View {
     @State private var endTime = Date() // 结束时间
     @State private var note = "" // 笔记
     @State private var selectedMood = "开心" // 选择的心情
-    @State private var selectedMoodColor = "#FFD700" // 选择的心情颜色
+    @State private var selectedMoodColor = "yellow" // 选择的心情颜色
     @State private var selectedActivity = "学习" // 选择的活动
     @State private var selectedActivityIcon = "book.fill" // 选择的活动图标
     
@@ -29,12 +30,12 @@ struct AddRecordView: View {
     
     // 预定义的心情选项
     private let moods = [
-        ("开心", "#FFD700"),
-        ("平静", "#87CEEB"),
-        ("难过", "#708090"),
-        ("生气", "#FF6347"),
-        ("焦虑", "#DDA0DD"),
-        ("兴奋", "#FF69B4")
+        ("开心", "yellow"),
+        ("平静", "blue"), 
+        ("难过", "gray"),
+        ("生气", "red"),
+        ("焦虑", "purple"),
+        ("兴奋", "pink")
     ]
     
     // 预定义的活动选项
@@ -78,25 +79,21 @@ struct AddRecordView: View {
                 // 心情选择部分
                 Section {
                     // State of Mind 原生界面按钮
-                    if #available(iOS 16.0, *) {
-                        Button(action: {
-                            if let healthKitManager = healthKitManager as? HealthKitMoodManager {
-                                healthKitManager.presentStateOfMindLogger()
-                            }
-                        }) {
-                            HStack {
-                                Image(systemName: "heart.text.square")
-                                    .foregroundColor(.blue)
-                                Text("使用系统心情记录")
-                                    .foregroundColor(.primary)
-                                Spacer()
-                                Image(systemName: "arrow.up.right.square")
-                                    .foregroundColor(.secondary)
-                            }
-                            .padding(.vertical, 8)
+                    Button(action: {
+                        healthKitManager.openHealthApp()
+                    }) {
+                        HStack {
+                            Image(systemName: "heart.text.square")
+                                .foregroundColor(.blue)
+                            Text("使用系统心情记录")
+                                .foregroundColor(.primary)
+                            Spacer()
+                            Image(systemName: "arrow.up.right.square")
+                                .foregroundColor(.secondary)
                         }
-                        .buttonStyle(.borderless)
+                        .padding(.vertical, 8)
                     }
+                    .buttonStyle(.borderless)
                     
                     LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 3), spacing: 10) {
                         // 预定义心情
@@ -223,7 +220,7 @@ struct AddRecordView: View {
             // 页面出现时设置默认结束时间（开始时间后1小时）
             endTime = startTime.addingTimeInterval(3600)
             // 初始化默认选择的颜色和图标
-            selectedMoodColor = moods.first { $0.0 == selectedMood }?.1 ?? "#FFD700"
+            selectedMoodColor = moods.first { $0.0 == selectedMood }?.1 ?? "yellow"
             selectedActivityIcon = activities.first { $0.0 == selectedActivity }?.1 ?? "book.fill"
         }
         // 添加心情标签弹窗
@@ -260,19 +257,17 @@ struct AddRecordView: View {
         
         // 保存到HealthKit（异步操作）
         Task {
-            if #available(iOS 16.0, *),
-               let manager = healthKitManager as? HealthKitMoodManager {
-                let success = await manager.saveMoodToHealthKit(
-                    mood: selectedMood,
-                    startTime: startTime,
-                    endTime: endTime,
-                    note: note
-                )
-                if success {
-                    print("心情数据已同步到HealthKit")
-                } else {
-                    print("HealthKit同步失败")
-                }
+            let success = await healthKitManager.saveMood(
+                mood: selectedMood,
+                startTime: startTime,
+                endTime: endTime,
+                note: note,
+                tags: []
+            )
+            if success {
+                print("心情数据已同步到HealthKit")
+            } else {
+                print("HealthKit同步失败")
             }
         }
         
@@ -292,19 +287,34 @@ struct MoodButton: View {
         Button(action: action) {
             Text(title)
                 .font(.body)
-                .foregroundColor(isSelected ? .white : Color(hex: color))
+                .foregroundColor(isSelected ? .white : colorFromString(color))
                 .padding(.horizontal, 12)
                 .padding(.vertical, 8)
                 .background(
                     RoundedRectangle(cornerRadius: 8)
-                        .fill(isSelected ? Color(hex: color) : Color(hex: color).opacity(0.2))
+                        .fill(isSelected ? colorFromString(color) : colorFromString(color).opacity(0.2))
                         .overlay(
                             RoundedRectangle(cornerRadius: 8)
-                                .stroke(Color(hex: color), lineWidth: 1)
+                                .stroke(colorFromString(color), lineWidth: 1)
                         )
                 )
         }
         .buttonStyle(PlainButtonStyle())
+    }
+    
+    // 将字符串转换为Color
+    private func colorFromString(_ colorName: String) -> Color {
+        switch colorName {
+        case "yellow": return .yellow
+        case "blue": return .blue
+        case "gray": return .gray
+        case "red": return .red
+        case "purple": return .purple
+        case "pink": return .pink
+        case "green": return .green
+        case "orange": return .orange
+        default: return .yellow
+        }
     }
 }
 
@@ -347,15 +357,15 @@ struct AddMoodTagView: View {
     @Environment(\.dismiss) private var dismiss
     
     @State private var name = ""
-    @State private var selectedColor = "#FFD700"
+    @State private var selectedColor = "yellow"
     
     let onTagAdded: (CustomMoodTag) -> Void
     
     // 预定义颜色选项
     private let availableColors = [
-        "#FFD700", "#FF6347", "#87CEEB", "#DDA0DD", 
-        "#98FB98", "#F0E68C", "#FFA07A", "#20B2AA",
-        "#FF69B4", "#8A2BE2", "#00CED1", "#FF4500"
+        "yellow", "red", "blue", "purple", 
+        "green", "orange", "pink", "gray",
+        "cyan", "indigo", "mint", "brown"
     ]
     
     var body: some View {
@@ -373,7 +383,7 @@ struct AddMoodTagView: View {
                                 selectedColor = color 
                             }) {
                                 Circle()
-                                    .fill(Color(hex: color))
+                                    .fill(colorFromString(color))
                                     .frame(width: 30, height: 30)
                                     .overlay(
                                         Circle()
@@ -407,6 +417,24 @@ struct AddMoodTagView: View {
                     .disabled(name.isEmpty)
                 }
             }
+        }
+    }
+    
+    private func colorFromString(_ colorName: String) -> Color {
+        switch colorName {
+        case "yellow": return .yellow
+        case "blue": return .blue
+        case "gray": return .gray
+        case "red": return .red
+        case "purple": return .purple
+        case "pink": return .pink
+        case "green": return .green
+        case "orange": return .orange
+        case "cyan": return .cyan
+        case "indigo": return .indigo
+        case "mint": return .mint
+        case "brown": return .brown
+        default: return .yellow
         }
     }
 }

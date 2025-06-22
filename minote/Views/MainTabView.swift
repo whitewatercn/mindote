@@ -1,4 +1,5 @@
 import SwiftUI
+import HealthKit
 
 /*
  应用的主标签页界面

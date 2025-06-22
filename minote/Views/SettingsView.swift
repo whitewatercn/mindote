@@ -1,19 +1,15 @@
 // 设置页面 - 用户可以管理应用设置和数据
 import SwiftUI
+import HealthKit
 import SwiftData
 import UniformTypeIdentifiers
 
 struct SettingsView: View {
     @Environment(\.modelContext) private var modelContext
-    @EnvironmentObject var healthKitManager: BaseHealthKitManager
+    @EnvironmentObject var healthKitManager: HealthKitMoodManager
     @Query private var records: [MoodRecord]
     @Query private var customMoodTags: [CustomMoodTag]
     @Query private var customActivityTags: [CustomActivityTag]
-    
-    // 类型安全的HealthKit管理器访问
-    private var manager: HealthKitMoodManager? {
-        return healthKitManager as? HealthKitMoodManager
-    }
     
     // 控制是否显示文件选择器（导出）
     @State private var showingExportPicker = false
@@ -451,12 +447,8 @@ struct SettingsView: View {
                     return
                 }
                 
-                // 解析CSV数据，传递当前的自定义标签
-                let importedRecords = CSVHelper.importFromCSV(
-                    csvContent: csvContent,
-                    customMoodTags: customMoodTags,
-                    customActivityTags: customActivityTags
-                )
+                // 解析CSV数据
+                let importedRecords = CSVHelper.importFromCSV(csvContent: csvContent)
                 
                 if importedRecords.isEmpty {
                     alertTitle = "导入完成"

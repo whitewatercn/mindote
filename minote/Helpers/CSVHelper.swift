@@ -32,7 +32,7 @@ struct CSVHelper {
     }
     
     // 从CSV格式的字符串解析心情记录数组
-    static func importFromCSV(csvContent: String, customMoodTags: [CustomMoodTag] = [], customActivityTags: [CustomActivityTag] = []) -> [MoodRecord] {
+    static func importFromCSV(csvContent: String) -> [MoodRecord] {
         var records: [MoodRecord] = []
         
         // 将CSV内容按行分割
@@ -67,9 +67,9 @@ struct CSVHelper {
                     let note = fields[4].replacingOccurrences(of: ";", with: ",")
                     
                     // 根据心情名称获取颜色（包括自定义标签）
-                    let moodColor = getMoodColor(for: mood, customTags: customMoodTags)
+                    let moodColor = getMoodColor(for: mood)
                     // 根据活动名称获取图标（包括自定义标签）
-                    let activityIcon = getActivityIcon(for: activity, customTags: customActivityTags)
+                    let activityIcon = getActivityIcon(for: activity)
                     
                     // 创建新的心情记录
                     let record = MoodRecord(
@@ -93,17 +93,12 @@ struct CSVHelper {
         return records
     }
     
-    // 根据心情名称获取对应的颜色（包括自定义标签）
-    private static func getMoodColor(for mood: String, customTags: [CustomMoodTag] = []) -> String {
-        // 首先检查自定义标签
-        if let customTag = customTags.first(where: { $0.name == mood }) {
-            return customTag.color
-        }
-        
-        // 如果没有找到自定义标签，使用预定义颜色
+    // 根据心情名称获取对应的颜色
+    private static func getMoodColor(for mood: String) -> String {
+        // 使用预定义颜色
         let moodColors = [
             "开心": "#FFD700",
-            "平静": "#87CEEB",
+            "平静": "#87CEEB", 
             "难过": "#708090",
             "生气": "#FF6347",
             "焦虑": "#DDA0DD",
@@ -112,14 +107,9 @@ struct CSVHelper {
         return moodColors[mood] ?? "#FFD700" // 默认金色
     }
     
-    // 根据活动名称获取对应的图标（包括自定义标签）
-    private static func getActivityIcon(for activity: String, customTags: [CustomActivityTag] = []) -> String {
-        // 首先检查自定义标签
-        if let customTag = customTags.first(where: { $0.name == activity }) {
-            return customTag.icon
-        }
-        
-        // 如果没有找到自定义标签，使用预定义图标
+    // 根据活动名称获取对应的图标
+    private static func getActivityIcon(for activity: String) -> String {
+        // 使用预定义图标
         let activityIcons = [
             "工作": "briefcase.fill",
             "学习": "book.fill",

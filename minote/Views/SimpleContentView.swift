@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import HealthKit
 
 /*
  主内容视图 - 应用的核心界面
@@ -37,25 +38,17 @@ struct SimpleContentView: View {
     var body: some View {
         NavigationView {
             VStack(spacing: 16) {
-                // HealthKit集成区域
-                healthKitSection
+                // 记录按钮区域
+                recordButtonSection
                 
                 // 记录列表区域
                 recordsSection
             }
             .navigationTitle("心情记录")
-            .toolbar {
-                // 导航栏右上角的添加按钮
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("添加记录") {
-                        showingAddRecord = true
-                    }
-                }
-            }
         }
-        // 添加记录的弹窗
+        // 记录界面的弹窗
         .sheet(isPresented: $showingAddRecord) {
-            AddRecordView()
+            UnifiedRecordView()
         }
         // 编辑记录的弹窗
         .sheet(isPresented: $showingEditRecord) {
@@ -71,37 +64,38 @@ struct SimpleContentView: View {
     
     // MARK: - 子视图组件
     
-    /// HealthKit集成部分的界面
-    private var healthKitSection: some View {
+    /// 记录按钮区域
+    private var recordButtonSection: some View {
         VStack(spacing: 12) {
-            Text("健康应用集成")
-                .font(.headline)
+            Text("记录你的心情")
+                .font(.title2)
+                .fontWeight(.semibold)
                 .foregroundColor(.primary)
             
-            HStack(spacing: 16) {
-                // HealthKit状态指示器
-                healthKitStatusView
-                
-                Spacer()
-                
-                // 打开健康应用按钮
-                Button(action: {
-                    healthKitManager.openHealthApp()
-                }) {
-                    HStack {
-                        Image(systemName: "heart.fill")
-                        Text("记录心情")
-                    }
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 8)
-                    .background(Color.blue)
-                    .foregroundColor(.white)
-                    .cornerRadius(8)
+            Button(action: {
+                showingAddRecord = true
+            }) {
+                HStack {
+                    Image(systemName: "heart.fill")
+                        .font(.title2)
+                    Text("开始记录")
+                        .font(.headline)
                 }
-                .disabled(!healthKitManager.isAuthorized)
+                .foregroundColor(.white)
+                .padding(.horizontal, 32)
+                .padding(.vertical, 16)
+                .background(
+                    LinearGradient(
+                        gradient: Gradient(colors: [.blue, .purple]),
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                )
+                .cornerRadius(25)
+                .shadow(color: .blue.opacity(0.3), radius: 10, x: 0, y: 5)
             }
             
-            Text("点击上方按钮打开健康应用，使用系统原生的心情记录功能")
+            Text("记录时间段和事件，点击心情标签时使用系统原生功能")
                 .font(.caption)
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
@@ -110,38 +104,6 @@ struct SimpleContentView: View {
         .background(Color(.systemGray6))
         .cornerRadius(12)
         .padding(.horizontal)
-    }
-    
-    /// HealthKit状态显示
-    private var healthKitStatusView: some View {
-        HStack {
-            // 状态图标
-            Image(systemName: healthKitManager.isAuthorized ? "checkmark.circle.fill" : "exclamationmark.circle.fill")
-                .foregroundColor(healthKitManager.isAuthorized ? .green : .orange)
-            
-            // 状态文字
-            VStack(alignment: .leading, spacing: 2) {
-                Text("HealthKit状态")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                
-                Text(healthKitStatusText)
-                    .font(.caption2)
-                    .fontWeight(.medium)
-                    .foregroundColor(healthKitManager.isAuthorized ? .green : .orange)
-            }
-        }
-    }
-    
-    /// HealthKit状态文字
-    private var healthKitStatusText: String {
-        if !healthKitManager.isHealthKitAvailable {
-            return "不可用"
-        } else if healthKitManager.isAuthorized {
-            return "已授权"
-        } else {
-            return "需要授权"
-        }
     }
     
     /// 记录列表部分
@@ -284,6 +246,5 @@ struct RecordRow: View {
 // MARK: - 预览
 
 #Preview {
-    SimpleContentView()
-        .environmentObject(HealthKitMoodManager())
+    SimpleContentView().environmentObject(HealthKitMoodManager())
 }
