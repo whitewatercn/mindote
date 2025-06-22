@@ -50,6 +50,12 @@ struct SimpleContentView: View {
         .sheet(isPresented: $showingAddRecord) {
             UnifiedRecordView()
         }
+        .onChange(of: showingAddRecord) { oldValue, newValue in
+            // 当记录界面关闭时，刷新数据
+            if oldValue && !newValue {
+                refreshData()
+            }
+        }
         // 编辑记录的弹窗
         .sheet(isPresented: $showingEditRecord) {
             if let record = recordToEdit {
@@ -59,6 +65,10 @@ struct SimpleContentView: View {
         .onAppear {
             // 视图出现时加载数据
             loadDataFromHealthKit()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in
+            // 应用重新激活时刷新数据
+            refreshData()
         }
     }
     
@@ -175,10 +185,72 @@ struct SimpleContentView: View {
                 let healthKitRecords = await healthKitManager.loadMoodRecords()
                 print("从HealthKit加载了 \(healthKitRecords.count) 条记录")
                 
-                // 在主线程更新UI（如果需要）
                 await MainActor.run {
-                    // 这里可以处理从HealthKit加载的数据
-                    // 比如合并到本地数据库或显示同步状态
+                    // 将HealthKit记录合并到本地数据库
+                    for healthKitRecord in healthKitRecords {
+                        // 检查是否已经存在相同时间的记录，避免重复
+                        let existingRecord = records.first { record in
+                            abs(record.startTime.timeIntervalSince(healthKitRecord.startTime)) < 60 // 1分钟内认为是同一条记录
+                        }
+                        
+                        if existingRecord == nil {
+                            // 创建新的本地记录
+                            let newRecord = MoodRecord(
+                                startTime: healthKitRecord.startTime,
+                                endTime: healthKitRecord.endTime,
+                                note: healthKitRecord.note,
+                                mood: healthKitRecord.mood,
+                                moodColor: healthKitRecord.moodColor,
+                                activity: healthKitRecord.activity,
+                                activityIcon: healthKitRecord.activityIcon
+                            )
+                            
+                            modelContext.insert(newRecord)
+                        }
+                    }
+                    
+                    // 保存上下文
+                    try? modelContext.save()
+                }
+            }
+        }
+    }
+    
+    /// 刷新数据 - 在记录保存后调用
+    private func refreshData() {
+        Task {
+            // 重新从HealthKit加载最新数据
+            if healthKitManager.isAuthorized {
+                let healthKitRecords = await healthKitManager.loadMoodRecords()
+                print("刷新：从HealthKit加载了 \(healthKitRecords.count) 条记录")
+                
+                await MainActor.run {
+                    // 将新的HealthKit记录合并到本地数据库
+                    for healthKitRecord in healthKitRecords {
+                        // 检查是否已经存在相同时间的记录，避免重复
+                        let existingRecord = records.first { record in
+                            abs(record.startTime.timeIntervalSince(healthKitRecord.startTime)) < 60
+                        }
+                        
+                        if existingRecord == nil {
+                            // 创建新的本地记录
+                            let newRecord = MoodRecord(
+                                startTime: healthKitRecord.startTime,
+                                endTime: healthKitRecord.endTime,
+                                note: healthKitRecord.note,
+                                mood: healthKitRecord.mood,
+                                moodColor: healthKitRecord.moodColor,
+                                activity: healthKitRecord.activity,
+                                activityIcon: healthKitRecord.activityIcon
+                            )
+                            
+                            modelContext.insert(newRecord)
+                        }
+                    }
+                    
+                    // 保存上下文
+                    try? modelContext.save()
+                    print("数据已刷新和同步")
                 }
             }
         }

@@ -60,8 +60,19 @@ struct InAppMoodRecordingView: View {
                 
                 if currentStep == 2 {
                     ToolbarItem(placement: .navigationBarTrailing) {
-                        Button("完成") {
+                        Button(action: {
                             saveMood()
+                        }) {
+                            if isSaving {
+                                HStack {
+                                    ProgressView()
+                                        .scaleEffect(0.8)
+                                    Text("保存中")
+                                        .font(.body)
+                                }
+                            } else {
+                                Text("完成")
+                            }
                         }
                         .disabled(selectedEmotion.isEmpty || isSaving)
                     }
@@ -299,13 +310,8 @@ struct InAppMoodRecordingView: View {
                 isSaving = false
                 
                 if success {
-                    alertMessage = "心情已成功保存到 HealthKit！"
-                    showingAlert = true
-                    
-                    // 延迟关闭窗口
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-                        dismiss()
-                    }
+                    // 心情保存成功，静默关闭页面，不显示提示
+                    dismiss()
                 } else {
                     alertMessage = "保存失败，请检查 HealthKit 权限设置。"
                     showingAlert = true
