@@ -21,6 +21,11 @@ struct SimpleMoodApp: App {
      */
     @StateObject private var healthKitManager = HealthKitMoodManager()
     
+    init() {
+        // 删除旧的数据库文件以避免迁移问题
+        cleanupOldDatabase()
+    }
+    
     var body: some Scene {
         WindowGroup {
             // 主界面 - 包含Tab导航的根视图
@@ -33,6 +38,31 @@ struct SimpleMoodApp: App {
             MoodRecord.self,        // 心情记录
             CustomMoodTag.self,     // 自定义心情标签
             CustomActivityTag.self  // 自定义活动标签
-        ])
+        ]) { result in
+            do {
+                let container = try result.get()
+                // 强制删除旧数据库并使用新的数据库文件
+                container.mainContext.autosaveEnabled = true
+                print("✅ 数据库容器创建成功")
+            } catch {
+                print("❌ 创建数据库容器失败: \(error)")
+            }
+        }
+    }
+    
+    // 清理旧数据库文件
+    private func cleanupOldDatabase() {
+        let fileManager = FileManager.default
+        let applicationSupport = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
+        let oldDatabaseURL = applicationSupport.appendingPathComponent("default.store")
+        
+        if fileManager.fileExists(atPath: oldDatabaseURL.path) {
+            do {
+                try fileManager.removeItem(at: oldDatabaseURL)
+                print("✅ 已删除旧数据库文件")
+            } catch {
+                print("⚠️ 删除旧数据库文件失败: \(error)")
+            }
+        }
     }
 }

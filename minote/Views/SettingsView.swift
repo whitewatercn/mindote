@@ -369,6 +369,34 @@ struct SettingsView: View {
         }
     }
     
+    // 删除记录方法
+    private func deleteRecords(offsets: IndexSet) {
+        let sortedRecords = records.sorted { $0.eventTime > $1.eventTime }
+        
+        Task {
+            for index in offsets {
+                let record = sortedRecords[index]
+                
+                // 如果记录有HealthKit UUID，先从HealthKit删除
+                if let healthKitUUID = record.healthKitUUID {
+                    let deleted = await healthKitManager.deleteMoodRecord(uuid: healthKitUUID)
+                    if deleted {
+                        print("✅ 已从HealthKit删除记录: \(healthKitUUID)")
+                    } else {
+                        print("⚠️ 从HealthKit删除记录失败: \(healthKitUUID)")
+                    }
+                }
+                
+                // 从本地数据库删除记录
+                await MainActor.run {
+                    withAnimation {
+                        modelContext.delete(record)
+                    }
+                }
+            }
+        }
+    }
+    
     /// 执行实际导入
     private func performActualImport() {
         guard let importResult = previewImportResult else { return }
@@ -405,8 +433,14 @@ struct SettingsView: View {
     
     // 计算总时长的字符串
     private var totalDurationString: String {
-        let totalSeconds = records.reduce(0) { sum, record in
-            sum + record.endTime.timeIntervalSince(record.startTime)
+        let totalSeconds = records.reduce(into: 0.0) { sum, record in
+            // 如果有时间段信息，使用实际时间段计算
+            if let startTime = record.startTime, let endTime = record.endTime, endTime > startTime {
+                sum += endTime.timeIntervalSince(startTime)
+            } else {
+                // 没有时间段信息时，假设每个记录持续5分钟
+                sum += 300.0 // 5分钟 = 300秒
+            }
         }
         
         let hours = Int(totalSeconds) / 3600
@@ -499,7 +533,7 @@ struct SettingsView: View {
                 // 解析CSV数据，带重复检测
                 print("🔍 开始导入验证，现有记录数量: \(records.count)")
                 
-                let importResult = CSVHelper.importFromCSVWithDuplicateCheck(
+                let importResult = CSVHelper.importFromCSV(
                     csvContent: csvContent,
                     existingRecords: records
                 )
@@ -657,117 +691,102 @@ struct ImportPreviewView: View {
     var body: some View {
         NavigationView {
             VStack(spacing: 20) {
-                // 统计信息
-                VStack(spacing: 12) {
-                    HStack {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("新增记录")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                            Text("\(importResult.imported.count)")
-                                .font(.title2)
-                                .fontWeight(.bold)
-                                .foregroundColor(.green)
-                        }
-                        
-                        Spacer()
-                        
-                        VStack(alignment: .trailing, spacing: 4) {
-                            Text("跳过重复")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                            Text("\(importResult.skipped)")
-                                .font(.title2)
-                                .fontWeight(.bold)
-                                .foregroundColor(.orange)
-                        }
-                    }
-                    .padding()
-                    .background(Color(.systemGray6))
-                    .cornerRadius(12)
-                }
-                
-                // 记录列表预览
-                if !importResult.imported.isEmpty {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("即将导入的记录")
-                            .font(.headline)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                        
-                        List {
-                            ForEach(Array(importResult.imported.prefix(10).enumerated()), id: \.offset) { index, record in
-                                VStack(alignment: .leading, spacing: 4) {
-                                    HStack {
-                                        Circle()
-                                            .fill(Color(record.moodColor))
-                                            .frame(width: 8, height: 8)
-                                        
-                                        Text(record.mood)
-                                            .font(.body)
-                                            .fontWeight(.medium)
-                                        
-                                        Spacer()
-                                        
-                                        Text(record.activity)
-                                            .font(.caption)
-                                            .foregroundColor(.secondary)
-                                    }
-                                    
-                                    Text(record.timeString)
-                                        .font(.caption)
-                                        .foregroundColor(.secondary)
-                                    
-                                    if !record.note.isEmpty {
-                                        Text(record.note)
-                                            .font(.caption)
-                                            .foregroundColor(.secondary)
-                                            .lineLimit(2)
-                                    }
-                                }
-                                .padding(.vertical, 2)
-                            }
-                            
-                            if importResult.imported.count > 10 {
-                                Text("... 还有 \(importResult.imported.count - 10) 条记录")
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
-                                    .italic()
-                            }
-                        }
-                        .listStyle(PlainListStyle())
-                    }
-                }
-                
-                if importResult.skipped > 0 {
-                    Text("重复检测标准: 相同时间段（±1分钟）、相同心情和活动、相似备注内容")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                        .multilineTextAlignment(.center)
-                        .padding()
-                        .background(Color(.systemGray6))
-                        .cornerRadius(8)
-                }
-                
+                statisticsSection
+                recordsPreview
                 Spacer()
+                actionButtons
             }
             .padding()
             .navigationTitle("导入预览")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button("取消") {
-                        onCancel()
+        }
+    }
+    
+    private var statisticsSection: some View {
+        VStack(spacing: 12) {
+            HStack {
+                statisticItem(title: "新增记录", value: "\(importResult.imported.count)", color: .green)
+                Spacer()
+                statisticItem(title: "跳过重复", value: "\(importResult.skipped)", color: .orange)
+            }
+        }
+        .padding()
+        .background(Color.gray.opacity(0.1))
+        .cornerRadius(10)
+    }
+    
+    private func statisticItem(title: String, value: String, color: Color) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(title)
+                .font(.caption)
+                .foregroundColor(.secondary)
+            Text(value)
+                .font(.title2)
+                .fontWeight(.bold)
+                .foregroundColor(color)
+        }
+    }
+    
+    private var recordsPreview: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("即将导入的记录:")
+                .font(.headline)
+            
+            if importResult.imported.isEmpty {
+                Text("没有新记录需要导入")
+                    .foregroundColor(.secondary)
+            } else {
+                ScrollView {
+                    LazyVStack(spacing: 8) {
+                        ForEach(Array(importResult.imported.prefix(10).enumerated()), id: \.offset) { index, record in
+                            recordPreviewRow(record: record)
+                        }
+                        
+                        if importResult.imported.count > 10 {
+                            Text("还有 \(importResult.imported.count - 10) 条记录...")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
                     }
                 }
-                
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("确认导入") {
-                        onConfirm()
-                    }
-                    .fontWeight(.semibold)
-                    .disabled(importResult.imported.isEmpty)
+                .frame(maxHeight: 300)
+            }
+        }
+    }
+    
+    private func recordPreviewRow(record: MoodRecord) -> some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(record.mood)
+                    .font(.body)
+                    .fontWeight(.medium)
+                Text(record.eventTime.formatted(date: .abbreviated, time: .shortened))
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                if record.startTime != nil || record.endTime != nil {
+                    Text(record.timeRangeString)
+                        .font(.caption2)
+                        .foregroundColor(.blue)
                 }
             }
+            Spacer()
+            if let activity = record.activity, !activity.isEmpty {
+                Text(activity)
+                    .font(.caption)
+                    .foregroundColor(.blue)
+            }
+        }
+        .padding(.vertical, 4)
+    }
+    
+    private var actionButtons: some View {
+        HStack(spacing: 16) {
+            Button("取消", action: onCancel)
+                .buttonStyle(.bordered)
+            
+            Button("确认导入", action: onConfirm)
+                .buttonStyle(.borderedProminent)
+                .disabled(importResult.imported.isEmpty)
         }
     }
 }

@@ -1,0 +1,48 @@
+{
+  "source": "/Users/www1/coding/learnswift/minote/minote/Views/SimpleContentView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "心情日记",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 40
+        }
+      },
+      {
+        "comment": "",
+        "key": "还没有心情记录",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 85
+        }
+      },
+      {
+        "comment": "",
+        "key": "点击下方按钮开始记录你的心情吧！",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 89
+        }
+      },
+      {
+        "comment": "",
+        "key": "添加记录",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 107
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@ - %@",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 142
+        }
+      }
+    ]
+  },
+  "version": 1
+}

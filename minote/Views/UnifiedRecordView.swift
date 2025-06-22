@@ -424,7 +424,7 @@ struct UnifiedRecordView: View {
             await MainActor.run {
                 if let latestRecord = recentRecords.first {
                     // 检查是否是最近5分钟内的记录
-                    let timeInterval = Date().timeIntervalSince(latestRecord.startTime)
+                    let timeInterval = Date().timeIntervalSince(latestRecord.eventTime)
                     if timeInterval <= 300 { // 5分钟内
                         recordedMoodSummary = latestRecord.note
                         recordedMoodValence = extractValenceFromNote(latestRecord.note)
@@ -474,17 +474,16 @@ struct UnifiedRecordView: View {
         }
         
         // 确定心情和颜色
-        let (finalMood, finalMoodColor) = determineMoodAndColor()
+        let (finalMood, _) = determineMoodAndColor()
         
-        // 创建新记录
+        // 创建新记录，包含时间段信息
         let newRecord = MoodRecord(
-            startTime: startTime,
-            endTime: endTime,
+            eventTime: startTime,
             note: fullNote,
             mood: finalMood,
-            moodColor: finalMoodColor,
             activity: selectedActivity,
-            activityIcon: selectedActivityIcon
+            startTime: startTime,
+            endTime: endTime
         )
         
         // 保存到数据库
@@ -492,7 +491,34 @@ struct UnifiedRecordView: View {
         
         do {
             try modelContext.save()
-            dismiss()
+            
+            // 自动同步到 HealthKit
+            Task {
+                let healthKitUUID = await healthKitManager.saveMood(
+                    mood: finalMood,
+                    startTime: startTime,
+                    endTime: endTime,
+                    note: fullNote,
+                    tags: [selectedActivity]
+                )
+                
+                await MainActor.run {
+                    if let uuid = healthKitUUID {
+                        // 更新记录以包含 HealthKit UUID
+                        newRecord.healthKitUUID = uuid
+                        do {
+                            try modelContext.save()
+                            print("✅ 记录已自动同步到 HealthKit，UUID: \(uuid)")
+                        } catch {
+                            print("⚠️ 保存 HealthKit UUID 失败: \(error)")
+                        }
+                    } else {
+                        print("⚠️ HealthKit 同步失败，但本地记录已保存")
+                    }
+                    dismiss()
+                }
+            }
+            
         } catch {
             alertTitle = "保存失败"
             alertMessage = "无法保存记录: \(error.localizedDescription)"

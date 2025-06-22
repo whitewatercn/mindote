@@ -1,0 +1,137 @@
+Command line invocation:
+    /Applications/Xcode.app/Contents/Developer/usr/bin/xcodebuild -scheme minote -destination "platform=iOS Simulator,name=iPhone 16"
+
+ComputePackagePrebuildTargetDependencyGraph
+
+Prepare packages
+
+CreateBuildRequest
+
+SendProjectDescription
+
+CreateBuildOperation
+
+ComputeTargetDependencyGraph
+note: Building targets in dependency order
+note: Target dependency graph (1 target)
+    Target 'minote' in project 'minote' (no dependencies)
+
+GatherProvisioningInputs
+
+CreateBuildDescription
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -v -E -dM -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator18.4.sdk -x c -c /dev/null
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/usr/bin/actool --print-asset-tag-combinations --output-format xml1 /Users/www1/coding/learnswift/minote/minote/Assets.xcassets
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/usr/bin/actool --version --output-format xml1
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc --version
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld -version_details
+
+Build description signature: fa6a3ea8ce18488701fad328d63412dc
+Build description path: /Users/www1/Library/Developer/Xcode/DerivedData/minote-erbvtuzykwgmuhdhabqiagcxjcxb/Build/Intermediates.noindex/XCBuildData/fa6a3ea8ce18488701fad328d63412dc.xcbuilddata
+ClangStatCache /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang-stat-cache /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator18.4.sdk /Users/www1/Library/Developer/Xcode/DerivedData/SDKStatCaches.noindex/iphonesimulator18.4-22E235-71825a6d136aa4733edcbe86ece5525b.sdkstatcache
+    cd /Users/www1/coding/learnswift/minote/minote.xcodeproj
+    /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang-stat-cache /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator18.4.sdk -o /Users/www1/Library/Developer/Xcode/DerivedData/SDKStatCaches.noindex/iphonesimulator18.4-22E235-71825a6d136aa4733edcbe86ece5525b.sdkstatcache
+
+WriteAuxiliaryFile /Users/www1/Library/Developer/Xcode/DerivedData/minote-erbvtuzykwgmuhdhabqiagcxjcxb/Build/Intermediates.noindex/minote.build/Debug-iphonesimulator/minote.build/Objects-normal/arm64/minote.SwiftFileList (in target 'minote' from project 'minote')
+    cd /Users/www1/coding/learnswift/minote
+    write-file /Users/www1/Library/Developer/Xcode/DerivedData/minote-erbvtuzykwgmuhdhabqiagcxjcxb/Build/Intermediates.noindex/minote.build/Debug-iphonesimulator/minote.build/Objects-normal/arm64/minote.SwiftFileList
+
+WriteAuxiliaryFile /Users/www1/Library/Developer/Xcode/DerivedData/minote-erbvtuzykwgmuhdhabqiagcxjcxb/Build/Intermediates.noindex/minote.build/Debug-iphonesimulator/minote.build/Objects-normal/arm64/minote.SwiftConstValuesFileList (in target 'minote' from project 'minote')
+    cd /Users/www1/coding/learnswift/minote
+    write-file /Users/www1/Library/Developer/Xcode/DerivedData/minote-erbvtuzykwgmuhdhabqiagcxjcxb/Build/Intermediates.noindex/minote.build/Debug-iphonesimulator/minote.build/Objects-normal/arm64/minote.SwiftConstValuesFileList
+
+WriteAuxiliaryFile /Users/www1/Library/Developer/Xcode/DerivedData/minote-erbvtuzykwgmuhdhabqiagcxjcxb/Build/Intermediates.noindex/minote.build/Debug-iphonesimulator/minote.build/Objects-normal/arm64/minote.LinkFileList (in target 'minote' from project 'minote')
+    cd /Users/www1/coding/learnswift/minote
+    write-file /Users/www1/Library/Developer/Xcode/DerivedData/minote-erbvtuzykwgmuhdhabqiagcxjcxb/Build/Intermediates.noindex/minote.build/Debug-iphonesimulator/minote.build/Objects-normal/arm64/minote.LinkFileList
+
+CompileAssetCatalogVariant thinned /Users/www1/Library/Developer/Xcode/DerivedData/minote-erbvtuzykwgmuhdhabqiagcxjcxb/Build/Products/Debug-iphonesimulator/minote.app /Users/www1/coding/learnswift/minote/minote/Assets.xcassets (in target 'minote' from project 'minote')
+    cd /Users/www1/coding/learnswift/minote
+    /Applications/Xcode.app/Contents/Developer/usr/bin/actool /Users/www1/coding/learnswift/minote/minote/Assets.xcassets --compile /Users/www1/Library/Developer/Xcode/DerivedData/minote-erbvtuzykwgmuhdhabqiagcxjcxb/Build/Intermediates.noindex/minote.build/Debug-iphonesimulator/minote.build/assetcatalog_output/thinned --output-format human-readable-text --notices --warnings --export-dependency-info /Users/www1/Library/Developer/Xcode/DerivedData/minote-erbvtuzykwgmuhdhabqiagcxjcxb/Build/Intermediates.noindex/minote.build/Debug-iphonesimulator/minote.build/assetcatalog_dependencies_thinned --output-partial-info-plist /Users/www1/Library/Developer/Xcode/DerivedData/minote-erbvtuzykwgmuhdhabqiagcxjcxb/Build/Intermediates.noindex/minote.build/Debug-iphonesimulator/minote.build/assetcatalog_generated_info.plist_thinned --app-icon AppIcon --accent-color AccentColor --compress-pngs --enable-on-demand-resources YES --filter-for-thinning-device-configuration iPhone17,3 --filter-for-device-os-version 18.4 --development-region zh-Hans --target-device iphone --target-device ipad --minimum-deployment-target 17.6 --platform iphonesimulator
+
+GenerateAssetSymbols /Users/www1/coding/learnswift/minote/minote/Assets.xcassets (in target 'minote' from project 'minote')
+    cd /Users/www1/coding/learnswift/minote
+    /Applications/Xcode.app/Contents/Developer/usr/bin/actool /Users/www1/coding/learnswift/minote/minote/Assets.xcassets --compile /Users/www1/Library/Developer/Xcode/DerivedData/minote-erbvtuzykwgmuhdhabqiagcxjcxb/Build/Products/Debug-iphonesimulator/minote.app --output-format human-readable-text --notices --warnings --export-dependency-info /Users/www1/Library/Developer/Xcode/DerivedData/minote-erbvtuzykwgmuhdhabqiagcxjcxb/Build/Intermediates.noindex/minote.build/Debug-iphonesimulator/minote.build/assetcatalog_dependencies --output-partial-info-plist /Users/www1/Library/Developer/Xcode/DerivedData/minote-erbvtuzykwgmuhdhabqiagcxjcxb/Build/Intermediates.noindex/minote.build/Debug-iphonesimulator/minote.build/assetcatalog_generated_info.plist --app-icon AppIcon --accent-color AccentColor --compress-pngs --enable-on-demand-resources YES --development-region zh-Hans --target-device iphone --target-device ipad --minimum-deployment-target 17.6 --platform iphonesimulator --bundle-identifier com.beginner.minote --generate-swift-asset-symbols /Users/www1/Library/Developer/Xcode/DerivedData/minote-erbvtuzykwgmuhdhabqiagcxjcxb/Build/Intermediates.noindex/minote.build/Debug-iphonesimulator/minote.build/DerivedSources/GeneratedAssetSymbols.swift --generate-objc-asset-symbols /Users/www1/Library/Developer/Xcode/DerivedData/minote-erbvtuzykwgmuhdhabqiagcxjcxb/Build/Intermediates.noindex/minote.build/Debug-iphonesimulator/minote.build/DerivedSources/GeneratedAssetSymbols.h --generate-asset-symbol-index /Users/www1/Library/Developer/Xcode/DerivedData/minote-erbvtuzykwgmuhdhabqiagcxjcxb/Build/Intermediates.noindex/minote.build/Debug-iphonesimulator/minote.build/DerivedSources/GeneratedAssetSymbols-Index.plist
+/* com.apple.actool.compilation-results */
+/Users/www1/Library/Developer/Xcode/DerivedData/minote-erbvtuzykwgmuhdhabqiagcxjcxb/Build/Intermediates.noindex/minote.build/Debug-iphonesimulator/minote.build/DerivedSources/GeneratedAssetSymbols-Index.plist
+/Users/www1/Library/Developer/Xcode/DerivedData/minote-erbvtuzykwgmuhdhabqiagcxjcxb/Build/Intermediates.noindex/minote.build/Debug-iphonesimulator/minote.build/DerivedSources/GeneratedAssetSymbols.h
+/Users/www1/Library/Developer/Xcode/DerivedData/minote-erbvtuzykwgmuhdhabqiagcxjcxb/Build/Intermediates.noindex/minote.build/Debug-iphonesimulator/minote.build/DerivedSources/GeneratedAssetSymbols.swift
+
+
+SwiftDriver minote normal arm64 com.apple.xcode.tools.swift.compiler (in target 'minote' from project 'minote')
+    cd /Users/www1/coding/learnswift/minote
+    builtin-SwiftDriver -- /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc -module-name minote -Onone -enforce-exclusivity\=checked @/Users/www1/Library/Developer/Xcode/DerivedData/minote-erbvtuzykwgmuhdhabqiagcxjcxb/Build/Intermediates.noindex/minote.build/Debug-iphonesimulator/minote.build/Objects-normal/arm64/minote.SwiftFileList -DDEBUG -enable-bare-slash-regex -enable-experimental-feature DebugDescriptionMacro -sdk /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator18.4.sdk -target arm64-apple-ios17.6-simulator -g -module-cache-path /Users/www1/Library/Developer/Xcode/DerivedData/ModuleCache.noindex -Xfrontend -serialize-debugging-options -profile-coverage-mapping -profile-generate -enable-testing -index-store-path /Users/www1/Library/Developer/Xcode/DerivedData/minote-erbvtuzykwgmuhdhabqiagcxjcxb/Index.noindex/DataStore -swift-version 5 -I /Users/www1/Library/Developer/Xcode/DerivedData/minote-erbvtuzykwgmuhdhabqiagcxjcxb/Build/Products/Debug-iphonesimulator -F /Users/www1/Library/Developer/Xcode/DerivedData/minote-erbvtuzykwgmuhdhabqiagcxjcxb/Build/Products/Debug-iphonesimulator -emit-localized-strings -emit-localized-strings-path /Users/www1/Library/Developer/Xcode/DerivedData/minote-erbvtuzykwgmuhdhabqiagcxjcxb/Build/Intermediates.noindex/minote.build/Debug-iphonesimulator/minote.build/Objects-normal/arm64 -c -j10 -enable-batch-mode -incremental -Xcc -ivfsstatcache -Xcc /Users/www1/Library/Developer/Xcode/DerivedData/SDKStatCaches.noindex/iphonesimulator18.4-22E235-71825a6d136aa4733edcbe86ece5525b.sdkstatcache -output-file-map /Users/www1/Library/Developer/Xcode/DerivedData/minote-erbvtuzykwgmuhdhabqiagcxjcxb/Build/Intermediates.noindex/minote.build/Debug-iphonesimulator/minote.build/Objects-normal/arm64/minote-OutputFileMap.json -use-frontend-parseable-output -save-temps -no-color-diagnostics -serialize-diagnostics -emit-dependencies -emit-module -emit-module-path /Users/www1/Library/Developer/Xcode/DerivedData/minote-erbvtuzykwgmuhdhabqiagcxjcxb/Build/Intermediates.noindex/minote.build/Debug-iphonesimulator/minote.build/Objects-normal/arm64/minote.swiftmodule -validate-clang-modules-once -clang-build-session-file /Users/www1/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/Session.modulevalidation -Xcc -I/Users/www1/Library/Developer/Xcode/DerivedData/minote-erbvtuzykwgmuhdhabqiagcxjcxb/Build/Intermediates.noindex/minote.build/Debug-iphonesimulator/minote.build/swift-overrides.hmap -emit-const-values -Xfrontend -const-gather-protocols-file -Xfrontend /Users/www1/Library/Developer/Xcode/DerivedData/minote-erbvtuzykwgmuhdhabqiagcxjcxb/Build/Intermediates.noindex/minote.build/Debug-iphonesimulator/minote.build/Objects-normal/arm64/minote_const_extract_protocols.json -Xcc -iquote -Xcc /Users/www1/Library/Developer/Xcode/DerivedData/minote-erbvtuzykwgmuhdhabqiagcxjcxb/Build/Intermediates.noindex/minote.build/Debug-iphonesimulator/minote.build/minote-generated-files.hmap -Xcc -I/Users/www1/Library/Developer/Xcode/DerivedData/minote-erbvtuzykwgmuhdhabqiagcxjcxb/Build/Intermediates.noindex/minote.build/Debug-iphonesimulator/minote.build/minote-own-target-headers.hmap -Xcc -I/Users/www1/Library/Developer/Xcode/DerivedData/minote-erbvtuzykwgmuhdhabqiagcxjcxb/Build/Intermediates.noindex/minote.build/Debug-iphonesimulator/minote.build/minote-all-target-headers.hmap -Xcc -iquote -Xcc /Users/www1/Library/Developer/Xcode/DerivedData/minote-erbvtuzykwgmuhdhabqiagcxjcxb/Build/Intermediates.noindex/minote.build/Debug-iphonesimulator/minote.build/minote-project-headers.hmap -Xcc -I/Users/www1/Library/Developer/Xcode/DerivedData/minote-erbvtuzykwgmuhdhabqiagcxjcxb/Build/Products/Debug-iphonesimulator/include -Xcc -I/Users/www1/Library/Developer/Xcode/DerivedData/minote-erbvtuzykwgmuhdhabqiagcxjcxb/Build/Intermediates.noindex/minote.build/Debug-iphonesimulator/minote.build/DerivedSources-normal/arm64 -Xcc -I/Users/www1/Library/Developer/Xcode/DerivedData/minote-erbvtuzykwgmuhdhabqiagcxjcxb/Build/Intermediates.noindex/minote.build/Debug-iphonesimulator/minote.build/DerivedSources/arm64 -Xcc -I/Users/www1/Library/Developer/Xcode/DerivedData/minote-erbvtuzykwgmuhdhabqiagcxjcxb/Build/Intermediates.noindex/minote.build/Debug-iphonesimulator/minote.build/DerivedSources -Xcc -DDEBUG\=1 -emit-objc-header -emit-objc-header-path /Users/www1/Library/Developer/Xcode/DerivedData/minote-erbvtuzykwgmuhdhabqiagcxjcxb/Build/Intermediates.noindex/minote.build/Debug-iphonesimulator/minote.build/Objects-normal/arm64/minote-Swift.h -working-directory /Users/www1/coding/learnswift/minote -experimental-emit-module-separately -disable-cmo
+
+SwiftCompile normal arm64 Compiling\ LocalMoodRecordingView.swift /Users/www1/coding/learnswift/minote/minote/Views/LocalMoodRecordingView.swift (in target 'minote' from project 'minote')
+SwiftCompile normal arm64 /Users/www1/coding/learnswift/minote/minote/Views/LocalMoodRecordingView.swift (in target 'minote' from project 'minote')
+    cd /Users/www1/coding/learnswift/minote
+    
+
+SwiftCompile normal arm64 Compiling\ MoodTagView.swift /Users/www1/coding/learnswift/minote/minote/Views/MoodTagView.swift (in target 'minote' from project 'minote')
+SwiftCompile normal arm64 /Users/www1/coding/learnswift/minote/minote/Views/MoodTagView.swift (in target 'minote' from project 'minote')
+    cd /Users/www1/coding/learnswift/minote
+    
+
+SwiftCompile normal arm64 Compiling\ SimpleModels.swift /Users/www1/coding/learnswift/minote/minote/Models/SimpleModels.swift (in target 'minote' from project 'minote')
+SwiftCompile normal arm64 /Users/www1/coding/learnswift/minote/minote/Models/SimpleModels.swift (in target 'minote' from project 'minote')
+    cd /Users/www1/coding/learnswift/minote
+    
+
+SwiftCompile normal arm64 Compiling\ SimpleMoodApp.swift /Users/www1/coding/learnswift/minote/minote/SimpleMoodApp.swift (in target 'minote' from project 'minote')
+
+SwiftCompile normal arm64 /Users/www1/coding/learnswift/minote/minote/SimpleMoodApp.swift (in target 'minote' from project 'minote')
+    cd /Users/www1/coding/learnswift/minote
+    
+/Users/www1/coding/learnswift/minote/minote/Views/UnifiedRecordView.swift:404:1: error: extraneous '}' at top level
+}
+^
+
+SwiftEmitModule normal arm64 Emitting\ module\ for\ minote (in target 'minote' from project 'minote')
+
+EmitSwiftModule normal arm64 (in target 'minote' from project 'minote')
+    cd /Users/www1/coding/learnswift/minote
+    
+
+SwiftCompile normal arm64 Compiling\ LocalMoodManager.swift,\ CSVHelper.swift /Users/www1/coding/learnswift/minote/minote/Managers/LocalMoodManager.swift /Users/www1/coding/learnswift/minote/minote/Helpers/CSVHelper.swift (in target 'minote' from project 'minote')
+
+SwiftCompile normal arm64 /Users/www1/coding/learnswift/minote/minote/Managers/LocalMoodManager.swift (in target 'minote' from project 'minote')
+    cd /Users/www1/coding/learnswift/minote
+    
+
+SwiftCompile normal arm64 /Users/www1/coding/learnswift/minote/minote/Helpers/CSVHelper.swift (in target 'minote' from project 'minote')
+    cd /Users/www1/coding/learnswift/minote
+    
+
+SwiftCompile normal arm64 Compiling\ GeneratedAssetSymbols.swift /Users/www1/Library/Developer/Xcode/DerivedData/minote-erbvtuzykwgmuhdhabqiagcxjcxb/Build/Intermediates.noindex/minote.build/Debug-iphonesimulator/minote.build/DerivedSources/GeneratedAssetSymbols.swift (in target 'minote' from project 'minote')
+Failed frontend command:
+/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swift-frontend -frontend -c /Users/www1/coding/learnswift/minote/minote/Views/SettingsView.swift /Users/www1/coding/learnswift/minote/minote/Views/MainTabView.swift /Users/www1/coding/learnswift/minote/minote/Views/EditRecordView.swift /Users/www1/coding/learnswift/minote/minote/Views/UnifiedRecordView.swift /Users/www1/coding/learnswift/minote/minote/Managers/LocalMoodManager.swift /Users/www1/coding/learnswift/minote/minote/Helpers/CSVHelper.swift /Users/www1/coding/learnswift/minote/minote/Views/LocalMoodRecordingView.swift /Users/www1/coding/learnswift/minote/minote/SimpleMoodApp.swift /Users/www1/coding/learnswift/minote/minote/Views/CustomTagsManagementView.swift /Users/www1/coding/learnswift/minote/minote/Models/SimpleModels.swift /Users/www1/coding/learnswift/minote/minote/Views/MoodTagView.swift /Users/www1/coding/learnswift/minote/minote/Views/SimpleContentView.swift -primary-file /Users/www1/Library/Developer/Xcode/DerivedData/minote-erbvtuzykwgmuhdhabqiagcxjcxb/Build/Intermediates.noindex/minote.build/Debug-iphonesimulator/minote.build/DerivedSources/GeneratedAssetSymbols.swift -emit-dependencies-path /Users/www1/Library/Developer/Xcode/DerivedData/minote-erbvtuzykwgmuhdhabqiagcxjcxb/Build/Intermediates.noindex/minote.build/Debug-iphonesimulator/minote.build/Objects-normal/arm64/GeneratedAssetSymbols.d -emit-const-values-path /Users/www1/Library/Developer/Xcode/DerivedData/minote-erbvtuzykwgmuhdhabqiagcxjcxb/Build/Intermediates.noindex/minote.build/Debug-iphonesimulator/minote.build/Objects-normal/arm64/GeneratedAssetSymbols.swiftconstvalues -emit-reference-dependencies-path /Users/www1/Library/Developer/Xcode/DerivedData/minote-erbvtuzykwgmuhdhabqiagcxjcxb/Build/Intermediates.noindex/minote.build/Debug-iphonesimulator/minote.build/Objects-normal/arm64/GeneratedAssetSymbols.swiftdeps -serialize-diagnostics-path /Users/www1/Library/Developer/Xcode/DerivedData/minote-erbvtuzykwgmuhdhabqiagcxjcxb/Build/Intermediates.noindex/minote.build/Debug-iphonesimulator/minote.build/Objects-normal/arm64/GeneratedAssetSymbols.dia -emit-localized-strings -emit-localized-strings-path /Users/www1/Library/Developer/Xcode/DerivedData/minote-erbvtuzykwgmuhdhabqiagcxjcxb/Build/Intermediates.noindex/minote.build/Debug-iphonesimulator/minote.build/Objects-normal/arm64 -target arm64-apple-ios17.6-simulator -Xllvm -aarch64-use-tbi -enable-objc-interop -sdk /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator18.4.sdk -I /Users/www1/Library/Developer/Xcode/DerivedData/minote-erbvtuzykwgmuhdhabqiagcxjcxb/Build/Products/Debug-iphonesimulator -F /Users/www1/Library/Developer/Xcode/DerivedData/minote-erbvtuzykwgmuhdhabqiagcxjcxb/Build/Products/Debug-iphonesimulator -no-color-diagnostics -enable-testing -g -debug-info-format\=dwarf -dwarf-version\=4 -module-cache-path /Users/www1/Library/Developer/Xcode/DerivedData/ModuleCache.noindex -profile-generate -profile-coverage-mapping -swift-version 5 -enforce-exclusivity\=checked -Onone -D DEBUG -serialize-debugging-options -const-gather-protocols-file /Users/www1/Library/Developer/Xcode/DerivedData/minote-erbvtuzykwgmuhdhabqiagcxjcxb/Build/Intermediates.noindex/minote.build/Debug-iphonesimulator/minote.build/Objects-normal/arm64/minote_const_extract_protocols.json -enable-experimental-feature DebugDescriptionMacro -enable-bare-slash-regex -empty-abi-descriptor -validate-clang-modules-once -clang-build-session-file /Users/www1/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/Session.modulevalidation -Xcc -working-directory -Xcc /Users/www1/coding/learnswift/minote -resource-dir /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift -enable-anonymous-context-mangled-names -file-compilation-dir /Users/www1/coding/learnswift/minote -Xcc -ivfsstatcache -Xcc /Users/www1/Library/Developer/Xcode/DerivedData/SDKStatCaches.noindex/iphonesimulator18.4-22E235-71825a6d136aa4733edcbe86ece5525b.sdkstatcache -Xcc -I/Users/www1/Library/Developer/Xcode/DerivedData/minote-erbvtuzykwgmuhdhabqiagcxjcxb/Build/Intermediates.noindex/minote.build/Debug-iphonesimulator/minote.build/swift-overrides.hmap -Xcc -iquote -Xcc /Users/www1/Library/Developer/Xcode/DerivedData/minote-erbvtuzykwgmuhdhabqiagcxjcxb/Build/Intermediates.noindex/minote.build/Debug-iphonesimulator/minote.build/minote-generated-files.hmap -Xcc -I/Users/www1/Library/Developer/Xcode/DerivedData/minote-erbvtuzykwgmuhdhabqiagcxjcxb/Build/Intermediates.noindex/minote.build/Debug-iphonesimulator/minote.build/minote-own-target-headers.hmap -Xcc -I/Users/www1/Library/Developer/Xcode/DerivedData/minote-erbvtuzykwgmuhdhabqiagcxjcxb/Build/Intermediates.noindex/minote.build/Debug-iphonesimulator/minote.build/minote-all-target-headers.hmap -Xcc -iquote -Xcc /Users/www1/Library/Developer/Xcode/DerivedData/minote-erbvtuzykwgmuhdhabqiagcxjcxb/Build/Intermediates.noindex/minote.build/Debug-iphonesimulator/minote.build/minote-project-headers.hmap -Xcc -I/Users/www1/Library/Developer/Xcode/DerivedData/minote-erbvtuzykwgmuhdhabqiagcxjcxb/Build/Products/Debug-iphonesimulator/include -Xcc -I/Users/www1/Library/Developer/Xcode/DerivedData/minote-erbvtuzykwgmuhdhabqiagcxjcxb/Build/Intermediates.noindex/minote.build/Debug-iphonesimulator/minote.build/DerivedSources-normal/arm64 -Xcc -I/Users/www1/Library/Developer/Xcode/DerivedData/minote-erbvtuzykwgmuhdhabqiagcxjcxb/Build/Intermediates.noindex/minote.build/Debug-iphonesimulator/minote.build/DerivedSources/arm64 -Xcc -I/Users/www1/Library/Developer/Xcode/DerivedData/minote-erbvtuzykwgmuhdhabqiagcxjcxb/Build/Intermediates.noindex/minote.build/Debug-iphonesimulator/minote.build/DerivedSources -Xcc -DDEBUG\=1 -module-name minote -frontend-parseable-output -disable-clang-spi -target-sdk-version 18.4 -target-sdk-name iphonesimulator18.4 -external-plugin-path /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/usr/lib/swift/host/plugins\#/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/usr/bin/swift-plugin-server -external-plugin-path /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/usr/local/lib/swift/host/plugins\#/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/usr/bin/swift-plugin-server -in-process-plugin-server-path /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/libSwiftInProcPluginServer.dylib -plugin-path /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins -plugin-path /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/local/lib/swift/host/plugins -o /Users/www1/Library/Developer/Xcode/DerivedData/minote-erbvtuzykwgmuhdhabqiagcxjcxb/Build/Intermediates.noindex/minote.build/Debug-iphonesimulator/minote.build/Objects-normal/arm64/GeneratedAssetSymbols.o -index-unit-output-path /minote.build/Debug-iphonesimulator/minote.build/Objects-normal/arm64/GeneratedAssetSymbols.o -index-store-path /Users/www1/Library/Developer/Xcode/DerivedData/minote-erbvtuzykwgmuhdhabqiagcxjcxb/Index.noindex/DataStore -index-system-modules
+
+SwiftCompile normal arm64 /Users/www1/Library/Developer/Xcode/DerivedData/minote-erbvtuzykwgmuhdhabqiagcxjcxb/Build/Intermediates.noindex/minote.build/Debug-iphonesimulator/minote.build/DerivedSources/GeneratedAssetSymbols.swift (in target 'minote' from project 'minote')
+    cd /Users/www1/coding/learnswift/minote
+    
+/Users/www1/coding/learnswift/minote/minote/Views/UnifiedRecordView.swift:404:1: error: extraneous '}' at top level
+}
+^
+
+SwiftCompile normal arm64 Compiling\ SimpleContentView.swift /Users/www1/coding/learnswift/minote/minote/Views/SimpleContentView.swift (in target 'minote' from project 'minote')
+
+SwiftCompile normal arm64 /Users/www1/coding/learnswift/minote/minote/Views/SimpleContentView.swift (in target 'minote' from project 'minote')
+    cd /Users/www1/coding/learnswift/minote
+    
+
+SwiftCompile normal arm64 Compiling\ EditRecordView.swift,\ UnifiedRecordView.swift /Users/www1/coding/learnswift/minote/minote/Views/EditRecordView.swift /Users/www1/coding/learnswift/minote/minote/Views/UnifiedRecordView.swift (in target 'minote' from project 'minote')
+
+SwiftCompile normal arm64 /Users/www1/coding/learnswift/minote/minote/Views/EditRecordView.swift (in target 'minote' from project 'minote')
+    cd /Users/www1/coding/learnswift/minote
+    
+
+SwiftCompile normal arm64 /Users/www1/coding/learnswift/minote/minote/Views/UnifiedRecordView.swift (in target 'minote' from project 'minote')
+    cd /Users/www1/coding/learnswift/minote
+    
+
+SwiftCompile normal arm64 Compiling\ SettingsView.swift,\ MainTabView.swift /Users/www1/coding/learnswift/minote/minote/Views/SettingsView.swift /Users/www1/coding/learnswift/minote/minote/Views/MainTabView.swift (in target 'minote' from project 'minote')
+Command SwiftCompile failed with a nonzero exit code
+

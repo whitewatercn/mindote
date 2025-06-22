@@ -1,0 +1,22 @@
+{
+	"configurations": [
+		{
+			"type": "swift",
+			"request": "launch",
+			"args": [],
+			"cwd": "${workspaceFolder:minote}",
+			"name": "Debug MinNote",
+			"program": "${workspaceFolder:minote}/.build/debug/MinNote",
+			"preLaunchTask": "swift: Build Debug MinNote"
+		},
+		{
+			"type": "swift",
+			"request": "launch",
+			"args": [],
+			"cwd": "${workspaceFolder:minote}",
+			"name": "Release MinNote",
+			"program": "${workspaceFolder:minote}/.build/release/MinNote",
+			"preLaunchTask": "swift: Build Release MinNote"
+		}
+	]
+}

@@ -45,6 +45,21 @@ struct EditRecordView: View {
         ("兴奋", "pink")
     ]
     
+    // 颜色辅助方法
+    private func colorFromString(_ colorString: String) -> Color {
+        switch colorString.lowercased() {
+        case "red": return .red
+        case "blue": return .blue
+        case "green": return .green
+        case "yellow": return .yellow
+        case "orange": return .orange
+        case "purple": return .purple
+        case "pink": return .pink
+        case "gray": return .gray
+        default: return .blue
+        }
+    }
+    
     // 预定义的活动选项
     private let activities = [
         ("工作", "briefcase.fill"),
@@ -60,17 +75,17 @@ struct EditRecordView: View {
     // 初始化方法 - 用现有记录的数据填充表单
     init(record: MoodRecord) {
         self.record = record
-        _startTime = State(initialValue: record.startTime)
-        _endTime = State(initialValue: record.endTime)
+        _startTime = State(initialValue: record.startTime ?? record.eventTime)
+        _endTime = State(initialValue: record.endTime ?? record.eventTime)
         _note = State(initialValue: record.note)
         _selectedMood = State(initialValue: record.mood)
-        _selectedMoodColor = State(initialValue: record.moodColor)
-        _selectedActivity = State(initialValue: record.activity)
-        _selectedActivityIcon = State(initialValue: record.activityIcon)
+        _selectedMoodColor = State(initialValue: "") // 初始为空
+        _selectedActivity = State(initialValue: record.activity ?? "其他")
+        _selectedActivityIcon = State(initialValue: "") // 初始为空
     }
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             Form {
                 // HealthKit 心情记录状态
                 Section {
@@ -309,7 +324,19 @@ struct EditRecordView: View {
                 .environmentObject(healthKitManager)
         }
         .onAppear {
+            print("🔍 EditRecordView appeared")
+            print("📝 Record to edit: mood=\(record.mood), activity=\(record.activity ?? "nil"), note=\(record.note)")
+            // 当视图出现时，设置心情和活动的颜色/图标
+            setupInitialState()
             checkHealthKitMoodStatus()
+        }
+        .onChange(of: customMoodTags) { oldValue, newValue in
+            // 当自定义心情标签加载完成后，重新设置状态
+            setupInitialState()
+        }
+        .onChange(of: customActivityTags) { oldValue, newValue in
+            // 当自定义活动标签加载完成后，重新设置状态
+            setupInitialState()
         }
         .onChange(of: showingMoodRecording) { oldValue, newValue in
             // 当心情记录界面关闭时，重新检查状态
@@ -319,27 +346,108 @@ struct EditRecordView: View {
         }
     }
     
+    // 设置初始状态
+    private func setupInitialState() {
+        print("🔧 Setting up initial state...")
+        print("📊 Available moods: \(moods.map { $0.0 })")
+        print("📊 Custom mood tags count: \(customMoodTags.count)")
+        print("📊 Available activities: \(activities.map { $0.0 })")
+        print("📊 Custom activity tags count: \(customActivityTags.count)")
+        
+        // 查找并设置心情颜色
+        if let mood = moods.first(where: { $0.0 == record.mood }) {
+            selectedMoodColor = mood.1
+            print("✅ Found mood color: \(mood.1) for mood: \(record.mood)")
+        } else if let moodTag = customMoodTags.first(where: { $0.name == record.mood }) {
+            selectedMoodColor = moodTag.color
+            print("✅ Found custom mood color: \(moodTag.color) for mood: \(record.mood)")
+        } else {
+            selectedMoodColor = "blue" // 默认颜色
+            print("⚠️ Using default color for mood: \(record.mood)")
+        }
+        
+        // 查找并设置活动图标
+        if let activity = activities.first(where: { $0.0 == record.activity }) {
+            selectedActivityIcon = activity.1
+            print("✅ Found activity icon: \(activity.1) for activity: \(record.activity ?? "nil")")
+        } else if let activityTag = customActivityTags.first(where: { $0.name == record.activity }) {
+            selectedActivityIcon = activityTag.icon
+            print("✅ Found custom activity icon: \(activityTag.icon) for activity: \(record.activity ?? "nil")")
+        } else {
+            selectedActivityIcon = "star" // 默认图标
+            print("⚠️ Using default icon for activity: \(record.activity ?? "nil")")
+        }
+        
+        print("🎯 Final state: mood=\(selectedMood), color=\(selectedMoodColor), activity=\(selectedActivity), icon=\(selectedActivityIcon)")
+    }
+
     // 保存修改的方法
     private func saveChanges() {
         // 更新记录的属性
-        record.startTime = startTime
-        record.endTime = endTime
+        record.eventTime = startTime
         record.note = note
         record.mood = selectedMood
-        record.moodColor = selectedMoodColor
         record.activity = selectedActivity
-        record.activityIcon = selectedActivityIcon
+        record.startTime = startTime
+        record.endTime = endTime
         
-        // 关闭页面
-        dismiss()
+        // 处理 HealthKit 同步：删除旧记录，创建新记录
+        Task {
+            // 如果原记录有 HealthKit UUID，先删除旧记录
+            if let oldHealthKitUUID = record.healthKitUUID {
+                let deleteSuccess = await healthKitManager.deleteMoodRecord(uuid: oldHealthKitUUID)
+                if deleteSuccess {
+                    print("✅ 已删除旧的 HealthKit 记录")
+                } else {
+                    print("⚠️ 删除旧 HealthKit 记录失败")
+                }
+            }
+            
+            // 创建新的 HealthKit 记录
+            let newHealthKitUUID = await healthKitManager.saveMood(
+                mood: selectedMood,
+                startTime: startTime,
+                endTime: endTime,
+                note: note,
+                tags: [selectedActivity]
+            )
+            
+            await MainActor.run {
+                if let uuid = newHealthKitUUID {
+                    // 更新记录的 HealthKit UUID
+                    record.healthKitUUID = uuid
+                    print("✅ 已创建新的 HealthKit 记录，UUID: \(uuid)")
+                } else {
+                    // 清除 HealthKit UUID 因为同步失败
+                    record.healthKitUUID = nil
+                    print("⚠️ HealthKit 同步失败，但本地记录已更新")
+                }
+                
+                // 关闭页面
+                dismiss()
+            }
+        }
     }
     
     // 删除记录的方法
     private func deleteRecord() {
-        // 从数据库删除记录
-        modelContext.delete(record)
-        // 关闭页面
-        dismiss()
+        Task {
+            // 如果记录有HealthKit UUID，先从HealthKit删除
+            if let healthKitUUID = record.healthKitUUID {
+                let deleted = await healthKitManager.deleteMoodRecord(uuid: healthKitUUID)
+                if deleted {
+                    print("✅ 已从HealthKit删除记录: \(healthKitUUID)")
+                } else {
+                    print("⚠️ 从HealthKit删除记录失败: \(healthKitUUID)")
+                }
+            }
+            
+            // 从本地数据库删除记录
+            await MainActor.run {
+                modelContext.delete(record)
+                dismiss()
+            }
+        }
     }
     
     // 检查HealthKit中是否有对应时间段的心情记录
@@ -347,9 +455,22 @@ struct EditRecordView: View {
         isCheckingHealthKit = true
         
         Task {
+            // 如果记录已经有 healthKitUUID，说明已经同步过了
+            if record.healthKitUUID != nil {
+                await MainActor.run {
+                    healthKitMoodExists = true
+                    isCheckingHealthKit = false
+                }
+                return
+            }
+            
+            // 检查时间段内是否有心情记录
+            let startTimeToCheck = record.startTime ?? record.eventTime
+            let endTimeToCheck = record.endTime ?? record.eventTime
+            
             let exists = await healthKitManager.checkMoodExistsInTimeRange(
-                startTime: record.startTime,
-                endTime: record.endTime
+                startTime: startTimeToCheck,
+                endTime: endTimeToCheck
             )
             
             await MainActor.run {
@@ -359,183 +480,212 @@ struct EditRecordView: View {
         }
     }
 }
-
-// MARK: - 组件定义
-
-/// 心情按钮组件
-struct MoodButton: View {
-    let title: String
-    let color: String
-    let isSelected: Bool
-    let action: () -> Void
     
-    var body: some View {
-        Button(action: action) {
-            Text(title)
-                .font(.caption)
+    // MARK: - 组件定义
+    
+    /// 心情按钮组件
+    struct MoodButton: View {
+        let title: String
+        let color: String
+        let isSelected: Bool
+        let action: () -> Void
+        
+        private func colorFromString(_ colorString: String) -> Color {
+            switch colorString.lowercased() {
+            case "red": return .red
+            case "blue": return .blue
+            case "green": return .green
+            case "yellow": return .yellow
+            case "orange": return .orange
+            case "purple": return .purple
+            case "pink": return .pink
+            case "gray": return .gray
+            default: return .blue
+            }
+        }
+        
+        var body: some View {
+            Button(action: action) {
+                Text(title)
+                    .font(.caption)
+                    .foregroundColor(isSelected ? .white : .primary)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .background(isSelected ? colorFromString(color) : Color(.systemGray6))
+                    .cornerRadius(16)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 16)
+                            .stroke(colorFromString(color), lineWidth: 1)
+                    )
+            }
+            .buttonStyle(PlainButtonStyle())
+        }
+    }
+    
+    /// 活动按钮组件
+    struct ActivityButton: View {
+        let title: String
+        let icon: String
+        let isSelected: Bool
+        let action: () -> Void
+        
+        var body: some View {
+            Button(action: action) {
+                HStack {
+                    Image(systemName: icon)
+                        .font(.body)
+                        .frame(width: 16, height: 16)
+                    Text(title)
+                        .font(.body)
+                }
                 .foregroundColor(isSelected ? .white : .primary)
                 .padding(.horizontal, 12)
                 .padding(.vertical, 8)
-                .background(isSelected ? Color(color) : Color(.systemGray6))
-                .cornerRadius(16)
+                .background(isSelected ? Color.blue : Color(.systemGray6))
+                .cornerRadius(8)
                 .overlay(
-                    RoundedRectangle(cornerRadius: 16)
-                        .stroke(Color(color), lineWidth: 1)
+                    RoundedRectangle(cornerRadius: 8)
+                        .stroke(isSelected ? Color.blue : Color(.systemGray4), lineWidth: 1)
                 )
-        }
-        .buttonStyle(PlainButtonStyle())
-    }
-}
-
-/// 活动按钮组件
-struct ActivityButton: View {
-    let title: String
-    let icon: String
-    let isSelected: Bool
-    let action: () -> Void
-    
-    var body: some View {
-        Button(action: action) {
-            HStack {
-                Image(systemName: icon)
-                    .font(.body)
-                    .frame(width: 16, height: 16)
-                Text(title)
-                    .font(.body)
             }
-            .foregroundColor(isSelected ? .white : .primary)
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
-            .background(isSelected ? Color.blue : Color(.systemGray6))
-            .cornerRadius(8)
-            .overlay(
-                RoundedRectangle(cornerRadius: 8)
-                    .stroke(isSelected ? Color.blue : Color(.systemGray4), lineWidth: 1)
-            )
+            .buttonStyle(PlainButtonStyle())
         }
-        .buttonStyle(PlainButtonStyle())
     }
-}
-
-/// 添加心情标签视图
-struct AddMoodTagView: View {
-    let onSave: (CustomMoodTag) -> Void
-    @Environment(\.dismiss) private var dismiss
     
-    @State private var tagName = ""
-    @State private var selectedColor = "blue"
-    
-    private let colorOptions = ["red", "blue", "green", "yellow", "orange", "purple", "pink", "gray"]
-    
-    var body: some View {
-        NavigationView {
-            VStack(spacing: 20) {
-                TextField("心情名称", text: $tagName)
-                    .textFieldStyle(RoundedBorderTextFieldStyle())
-                
-                Text("选择颜色")
-                    .font(.headline)
-                
-                LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 4), spacing: 12) {
-                    ForEach(colorOptions, id: \.self) { color in
-                        Button(action: {
-                            selectedColor = color
-                        }) {
-                            Circle()
-                                .fill(Color(color))
-                                .frame(width: 40, height: 40)
-                                .overlay(
-                                    Circle()
-                                        .stroke(selectedColor == color ? Color.black : Color.clear, lineWidth: 2)
-                                )
+    /// 添加心情标签视图
+    struct AddMoodTagView: View {
+        let onSave: (CustomMoodTag) -> Void
+        @Environment(\.dismiss) private var dismiss
+        
+        @State private var tagName = ""
+        @State private var selectedColor = "blue"
+        
+        private let colorOptions = ["red", "blue", "green", "yellow", "orange", "purple", "pink", "gray"]
+        
+        private func colorFromString(_ colorString: String) -> Color {
+            switch colorString.lowercased() {
+            case "red": return .red
+            case "blue": return .blue
+            case "green": return .green
+            case "yellow": return .yellow
+            case "orange": return .orange
+            case "purple": return .purple
+            case "pink": return .pink
+            case "gray": return .gray
+            default: return .blue
+            }
+        }
+        
+        var body: some View {
+            NavigationView {
+                VStack(spacing: 20) {
+                    TextField("心情名称", text: $tagName)
+                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                    
+                    Text("选择颜色")
+                        .font(.headline)
+                    
+                    LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 4), spacing: 12) {
+                        ForEach(colorOptions, id: \.self) { color in
+                            Button(action: {
+                                selectedColor = color
+                            }) {
+                                Circle()
+                                    .fill(colorFromString(color))
+                                    .frame(width: 40, height: 40)
+                                    .overlay(
+                                        Circle()
+                                            .stroke(selectedColor == color ? Color.black : Color.clear, lineWidth: 2)
+                                    )
+                            }
                         }
                     }
+                    
+                    Spacer()
                 }
-                
-                Spacer()
-            }
-            .padding()
-            .navigationTitle("添加心情标签")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button("取消") {
-                        dismiss()
-                    }
-                }
-                
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("保存") {
-                        let newTag = CustomMoodTag(name: tagName, color: selectedColor)
-                        onSave(newTag)
-                        dismiss()
-                    }
-                    .disabled(tagName.isEmpty)
-                }
-            }
-        }
-    }
-}
-
-/// 添加活动标签视图
-struct AddActivityTagView: View {
-    let onSave: (CustomActivityTag) -> Void
-    @Environment(\.dismiss) private var dismiss
-    
-    @State private var tagName = ""
-    @State private var selectedIcon = "star.fill"
-    
-    private let iconOptions = [
-        "star.fill", "heart.fill", "sun.max.fill", "moon.fill",
-        "cloud.fill", "flame.fill", "drop.fill", "leaf.fill",
-        "music.note", "camera.fill", "paintbrush.fill", "hammer.fill"
-    ]
-    
-    var body: some View {
-        NavigationView {
-            VStack(spacing: 20) {
-                TextField("活动名称", text: $tagName)
-                    .textFieldStyle(RoundedBorderTextFieldStyle())
-                
-                Text("选择图标")
-                    .font(.headline)
-                
-                LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 4), spacing: 12) {
-                    ForEach(iconOptions, id: \.self) { icon in
-                        Button(action: {
-                            selectedIcon = icon
-                        }) {
-                            Image(systemName: icon)
-                                .font(.title2)
-                                .foregroundColor(selectedIcon == icon ? .white : .blue)
-                                .frame(width: 50, height: 50)
-                                .background(selectedIcon == icon ? Color.blue : Color(.systemGray6))
-                                .cornerRadius(8)
+                .padding()
+                .navigationTitle("添加心情标签")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .navigationBarLeading) {
+                        Button("取消") {
+                            dismiss()
                         }
                     }
-                }
-                
-                Spacer()
-            }
-            .padding()
-            .navigationTitle("添加活动标签")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button("取消") {
-                        dismiss()
+                    
+                    ToolbarItem(placement: .navigationBarTrailing) {
+                        Button("保存") {
+                            let newTag = CustomMoodTag(name: tagName, color: selectedColor)
+                            onSave(newTag)
+                            dismiss()
+                        }
+                        .disabled(tagName.isEmpty)
                     }
-                }
-                
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("保存") {
-                        let newTag = CustomActivityTag(name: tagName, icon: selectedIcon)
-                        onSave(newTag)
-                        dismiss()
-                    }
-                    .disabled(tagName.isEmpty)
                 }
             }
         }
     }
-}
+    
+    /// 添加活动标签视图
+    struct AddActivityTagView: View {
+        let onSave: (CustomActivityTag) -> Void
+        @Environment(\.dismiss) private var dismiss
+        
+        @State private var tagName = ""
+        @State private var selectedIcon = "star.fill"
+        
+        private let iconOptions = [
+            "star.fill", "heart.fill", "sun.max.fill", "moon.fill",
+            "cloud.fill", "flame.fill", "drop.fill", "leaf.fill",
+            "music.note", "camera.fill", "paintbrush.fill", "hammer.fill"
+        ]
+        
+        var body: some View {
+            NavigationView {
+                VStack(spacing: 20) {
+                    TextField("活动名称", text: $tagName)
+                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                    
+                    Text("选择图标")
+                        .font(.headline)
+                    
+                    LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 4), spacing: 12) {
+                        ForEach(iconOptions, id: \.self) { icon in
+                            Button(action: {
+                                selectedIcon = icon
+                            }) {
+                                Image(systemName: icon)
+                                    .font(.title2)
+                                    .foregroundColor(selectedIcon == icon ? .white : .blue)
+                                    .frame(width: 50, height: 50)
+                                    .background(selectedIcon == icon ? Color.blue : Color(.systemGray6))
+                                    .cornerRadius(8)
+                            }
+                        }
+                    }
+                    
+                    Spacer()
+                }
+                .padding()
+                .navigationTitle("添加活动标签")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .navigationBarLeading) {
+                        Button("取消") {
+                            dismiss()
+                        }
+                    }
+                    
+                    ToolbarItem(placement: .navigationBarTrailing) {
+                        Button("保存") {
+                            let newTag = CustomActivityTag(name: tagName, icon: selectedIcon)
+                            onSave(newTag)
+                            dismiss()
+                        }
+                        .disabled(tagName.isEmpty)
+                    }
+                }
+            }
+        }
+    }
+

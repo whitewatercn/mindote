@@ -315,18 +315,25 @@ struct InAppMoodRecordingView: View {
             // 构建完整的心情描述，包含程度和具体情绪
             let fullMoodDescription = "\(moodDescription) - \(selectedEmotion)"
             
-            let success = await healthKitManager.saveInAppMood(
-                valence: valence,
-                reflection: reflection.isEmpty ? fullMoodDescription : "\(fullMoodDescription)\n\n\(reflection)"
+            // 使用当前时间作为记录时间
+            let currentTime = Date()
+            
+            let healthKitUUID = await healthKitManager.saveMood(
+                mood: selectedEmotion,
+                startTime: currentTime,
+                endTime: currentTime,
+                note: reflection.isEmpty ? fullMoodDescription : "\(fullMoodDescription)\n\n\(reflection)",
+                tags: [moodDescription]
             )
             
             await MainActor.run {
                 isSaving = false
                 
-                if success {
+                if let uuid = healthKitUUID {
                     // 心情保存成功，显示成功状态
                     savedMoodDescription = "\(moodDescription) - \(selectedEmotion)"
                     currentStep = 3
+                    print("✅ 心情已保存到 HealthKit，UUID: \(uuid)")
                 } else {
                     alertMessage = "保存失败，请检查 HealthKit 权限设置。"
                     showingAlert = true

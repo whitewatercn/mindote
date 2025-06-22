@@ -1,0 +1,24 @@
+{
+  "source": "/Users/www1/coding/learnswift/minote/minote/Views/MainTabView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "主页",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 27
+        }
+      },
+      {
+        "comment": "",
+        "key": "设置",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 35
+        }
+      }
+    ]
+  },
+  "version": 1
+}

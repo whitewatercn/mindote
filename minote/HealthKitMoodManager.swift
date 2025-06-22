@@ -22,6 +22,7 @@ import SwiftUI
  注意：此实现不兼容 iOS 17，专门为 iOS 18+ 优化
  */
 @available(iOS 18.0, *)
+@MainActor
 class HealthKitMoodManager: ObservableObject {
     
     // MARK: - 发布属性（用于UI更新）
@@ -171,7 +172,9 @@ class HealthKitMoodManager: ObservableObject {
                 limit: HKObjectQueryNoLimit,
                 sortDescriptors: [sortDescriptor]
             ) { _, samples, error in
-                self.handleQueryResults(samples: samples, error: error, continuation: continuation)
+                Task { @MainActor in
+                    self.handleQueryResults(samples: samples, error: error, continuation: continuation)
+                }
             }
             
             healthStore.execute(query)
@@ -197,11 +200,11 @@ class HealthKitMoodManager: ObservableObject {
     
     // MARK: - 数据保存（遵循Apple官方最佳实践）
     
-       /// 保存心情数据到HealthKit（使用iOS 18+ HKStateOfMind API）
-    func saveMood(mood: String, startTime: Date, endTime: Date, note: String, tags: [String]) async -> Bool {
+    /// 保存心情数据到HealthKit（使用iOS 18+ HKStateOfMind API），返回保存的记录UUID
+    func saveMood(mood: String, startTime: Date, endTime: Date, note: String, tags: [String]) async -> UUID? {
         guard isAuthorized else {
             print("❌ HealthKit未授权，无法保存数据")
-            return false
+            return nil
         }
         
         do {
@@ -215,11 +218,55 @@ class HealthKitMoodManager: ObservableObject {
             let stateOfMind = try createHKStateOfMind(valence: valence, reflection: fullReflection)
             try await healthStore.save(stateOfMind)
             print("✅ 成功保存 HKStateOfMind 到 HealthKit (mood: \(mood), valence: \(valence))")
-            return true
+            return stateOfMind.uuid
             
         } catch {
             print("❌ 保存心情数据到HealthKit失败: \(error.localizedDescription)")
+            return nil
+        }
+    }
+    
+    /// 从HealthKit删除指定UUID的心情记录
+    func deleteMoodRecord(uuid: UUID) async -> Bool {
+        guard isAuthorized else {
+            print("❌ HealthKit未授权，无法删除数据")
             return false
+        }
+        
+        return await withCheckedContinuation { continuation in
+            // 创建查询条件，查找指定UUID的记录
+            let predicate = HKQuery.predicateForObject(with: uuid)
+            
+            let sampleQuery = HKSampleQuery(
+                sampleType: stateOfMindType as! HKSampleType,
+                predicate: predicate,
+                limit: 1,
+                sortDescriptors: nil
+            ) { _, samples, error in
+                if let error = error {
+                    print("❌ 查询HealthKit记录失败: \(error.localizedDescription)")
+                    continuation.resume(returning: false)
+                    return
+                }
+                
+                if let samples = samples, let sample = samples.first {
+                    Task {
+                        do {
+                            try await self.healthStore.delete(sample)
+                            print("✅ 成功删除 HealthKit 记录 (UUID: \(uuid))")
+                            continuation.resume(returning: true)
+                        } catch {
+                            print("❌ 删除HealthKit记录失败: \(error.localizedDescription)")
+                            continuation.resume(returning: false)
+                        }
+                    }
+                } else {
+                    print("⚠️ 未找到指定UUID的HealthKit记录: \(uuid)")
+                    continuation.resume(returning: false)
+                }
+            }
+            
+            healthStore.execute(sampleQuery)
         }
     }
     
@@ -227,32 +274,26 @@ class HealthKitMoodManager: ObservableObject {
     
     /// 将HealthKit样本转换为应用的心情记录格式
     private func convertHealthKitSamplesToMoodRecords(_ samples: [HKSample]) -> [MoodRecord] {
-        return samples.compactMap { sample in
+        return samples.compactMap { sample -> MoodRecord? in
             let startTime = sample.startDate
-            let endTime = sample.endDate
             let metadata = sample.metadata ?? [:]
             let note = metadata["reflection"] as? String ?? metadata["user_notes"] as? String ?? ""
             
             var mood: String
-            var moodColor: String
             
             // iOS 18+: 专门处理 HKStateOfMind 对象
             if let stateOfMind = sample as? HKStateOfMind {
                 mood = mapValenceToMood(stateOfMind.valence)
-                moodColor = getMoodColor(for: mood)
             } else {
                 return nil // 只处理 HKStateOfMind 对象
             }
             
             // 创建心情记录
             return MoodRecord(
-                startTime: startTime,
-                endTime: endTime,
+                eventTime: startTime,
                 note: note,
                 mood: mood,
-                moodColor: moodColor,
-                activity: "健康记录",
-                activityIcon: "heart.fill"
+                activity: "健康记录"
             )
         }
     }
@@ -433,13 +474,13 @@ class HealthKitMoodManager: ObservableObject {
         for record in records {
             let success = await saveMood(
                 mood: record.mood,
-                startTime: record.startTime,
-                endTime: record.endTime,
+                startTime: record.eventTime,
+                endTime: record.eventTime,
                 note: record.note,
                 tags: []
             )
             
-            if success {
+            if success != nil {
                 successCount += 1
             } else {
                 failedCount += 1

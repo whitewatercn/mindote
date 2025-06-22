@@ -1,0 +1,14 @@
+version: "Apple Swift version 6.1 (swiftlang-6.1.0.110.21 clang-1700.0.13.3)"
+options: "563aed88f27381e04f42c61e4d4c62777a298dc6ac3ddb8c4ab15a20c1158f54"
+build_start_time: [1750584592, 964190000]
+build_end_time: [1750584594, 269401000]
+inputs:
+  "/Users/www1/coding/learnswift/minote/build/minote.build/Release-iphoneos/minote.build/DerivedSources/GeneratedAssetSymbols.swift": [1750584503, 292091771]
+  "/Users/www1/coding/learnswift/minote/minote/Helpers/CSVHelper.swift": [1750584389, 898409574]
+  "/Users/www1/coding/learnswift/minote/minote/Managers/LocalMoodManager.swift": [1750584389, 898325864]
+  "/Users/www1/coding/learnswift/minote/minote/Models/SimpleModels.swift": [1750584389, 898369573]
+  "/Users/www1/coding/learnswift/minote/minote/SimpleMoodApp.swift": [1750584389, 898402490]
+  "/Users/www1/coding/learnswift/minote/minote/Views/MainTabView.swift": [1750580370, 20270018]
+  "/Users/www1/coding/learnswift/minote/minote/Views/RecordEditorView.swift": [1750584389, 898432116]
+  "/Users/www1/coding/learnswift/minote/minote/Views/SettingsView.swift": [1750584572, 815236227]
+  "/Users/www1/coding/learnswift/minote/minote/Views/SimpleContentView.swift": [1750584389, 899877717]

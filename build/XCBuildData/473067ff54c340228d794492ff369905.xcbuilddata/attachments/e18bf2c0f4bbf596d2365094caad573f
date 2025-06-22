@@ -1,0 +1,55 @@
+{
+  "" : {
+    "const-values" : "/Users/www1/coding/learnswift/minote/build/minote.build/Release-iphoneos/minote.build/Objects-normal/arm64/minote-master.swiftconstvalues",
+    "dependencies" : "/Users/www1/coding/learnswift/minote/build/minote.build/Release-iphoneos/minote.build/Objects-normal/arm64/minote-master.d",
+    "diagnostics" : "/Users/www1/coding/learnswift/minote/build/minote.build/Release-iphoneos/minote.build/Objects-normal/arm64/minote-master.dia",
+    "emit-module-dependencies" : "/Users/www1/coding/learnswift/minote/build/minote.build/Release-iphoneos/minote.build/Objects-normal/arm64/minote-master-emit-module.d",
+    "emit-module-diagnostics" : "/Users/www1/coding/learnswift/minote/build/minote.build/Release-iphoneos/minote.build/Objects-normal/arm64/minote-master-emit-module.dia",
+    "swift-dependencies" : "/Users/www1/coding/learnswift/minote/build/minote.build/Release-iphoneos/minote.build/Objects-normal/arm64/minote-master.swiftdeps"
+  },
+  "/Users/www1/coding/learnswift/minote/build/minote.build/Release-iphoneos/minote.build/DerivedSources/GeneratedAssetSymbols.swift" : {
+    "index-unit-output-path" : "/minote.build/Release-iphoneos/minote.build/Objects-normal/arm64/GeneratedAssetSymbols.o",
+    "llvm-bc" : "/Users/www1/coding/learnswift/minote/build/minote.build/Release-iphoneos/minote.build/Objects-normal/arm64/GeneratedAssetSymbols.bc",
+    "object" : "/Users/www1/coding/learnswift/minote/build/minote.build/Release-iphoneos/minote.build/Objects-normal/arm64/GeneratedAssetSymbols.o"
+  },
+  "/Users/www1/coding/learnswift/minote/minote/Helpers/CSVHelper.swift" : {
+    "index-unit-output-path" : "/minote.build/Release-iphoneos/minote.build/Objects-normal/arm64/CSVHelper.o",
+    "llvm-bc" : "/Users/www1/coding/learnswift/minote/build/minote.build/Release-iphoneos/minote.build/Objects-normal/arm64/CSVHelper.bc",
+    "object" : "/Users/www1/coding/learnswift/minote/build/minote.build/Release-iphoneos/minote.build/Objects-normal/arm64/CSVHelper.o"
+  },
+  "/Users/www1/coding/learnswift/minote/minote/Managers/LocalMoodManager.swift" : {
+    "index-unit-output-path" : "/minote.build/Release-iphoneos/minote.build/Objects-normal/arm64/LocalMoodManager.o",
+    "llvm-bc" : "/Users/www1/coding/learnswift/minote/build/minote.build/Release-iphoneos/minote.build/Objects-normal/arm64/LocalMoodManager.bc",
+    "object" : "/Users/www1/coding/learnswift/minote/build/minote.build/Release-iphoneos/minote.build/Objects-normal/arm64/LocalMoodManager.o"
+  },
+  "/Users/www1/coding/learnswift/minote/minote/Models/SimpleModels.swift" : {
+    "index-unit-output-path" : "/minote.build/Release-iphoneos/minote.build/Objects-normal/arm64/SimpleModels.o",
+    "llvm-bc" : "/Users/www1/coding/learnswift/minote/build/minote.build/Release-iphoneos/minote.build/Objects-normal/arm64/SimpleModels.bc",
+    "object" : "/Users/www1/coding/learnswift/minote/build/minote.build/Release-iphoneos/minote.build/Objects-normal/arm64/SimpleModels.o"
+  },
+  "/Users/www1/coding/learnswift/minote/minote/SimpleMoodApp.swift" : {
+    "index-unit-output-path" : "/minote.build/Release-iphoneos/minote.build/Objects-normal/arm64/SimpleMoodApp.o",
+    "llvm-bc" : "/Users/www1/coding/learnswift/minote/build/minote.build/Release-iphoneos/minote.build/Objects-normal/arm64/SimpleMoodApp.bc",
+    "object" : "/Users/www1/coding/learnswift/minote/build/minote.build/Release-iphoneos/minote.build/Objects-normal/arm64/SimpleMoodApp.o"
+  },
+  "/Users/www1/coding/learnswift/minote/minote/Views/MainTabView.swift" : {
+    "index-unit-output-path" : "/minote.build/Release-iphoneos/minote.build/Objects-normal/arm64/MainTabView.o",
+    "llvm-bc" : "/Users/www1/coding/learnswift/minote/build/minote.build/Release-iphoneos/minote.build/Objects-normal/arm64/MainTabView.bc",
+    "object" : "/Users/www1/coding/learnswift/minote/build/minote.build/Release-iphoneos/minote.build/Objects-normal/arm64/MainTabView.o"
+  },
+  "/Users/www1/coding/learnswift/minote/minote/Views/RecordEditorView.swift" : {
+    "index-unit-output-path" : "/minote.build/Release-iphoneos/minote.build/Objects-normal/arm64/RecordEditorView.o",
+    "llvm-bc" : "/Users/www1/coding/learnswift/minote/build/minote.build/Release-iphoneos/minote.build/Objects-normal/arm64/RecordEditorView.bc",
+    "object" : "/Users/www1/coding/learnswift/minote/build/minote.build/Release-iphoneos/minote.build/Objects-normal/arm64/RecordEditorView.o"
+  },
+  "/Users/www1/coding/learnswift/minote/minote/Views/SettingsView.swift" : {
+    "index-unit-output-path" : "/minote.build/Release-iphoneos/minote.build/Objects-normal/arm64/SettingsView.o",
+    "llvm-bc" : "/Users/www1/coding/learnswift/minote/build/minote.build/Release-iphoneos/minote.build/Objects-normal/arm64/SettingsView.bc",
+    "object" : "/Users/www1/coding/learnswift/minote/build/minote.build/Release-iphoneos/minote.build/Objects-normal/arm64/SettingsView.o"
+  },
+  "/Users/www1/coding/learnswift/minote/minote/Views/SimpleContentView.swift" : {
+    "index-unit-output-path" : "/minote.build/Release-iphoneos/minote.build/Objects-normal/arm64/SimpleContentView.o",
+    "llvm-bc" : "/Users/www1/coding/learnswift/minote/build/minote.build/Release-iphoneos/minote.build/Objects-normal/arm64/SimpleContentView.bc",
+    "object" : "/Users/www1/coding/learnswift/minote/build/minote.build/Release-iphoneos/minote.build/Objects-normal/arm64/SimpleContentView.o"
+  }
+}
