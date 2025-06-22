@@ -8,7 +8,7 @@ struct AddRecordView: View {
     // 关闭页面的方法
     @Environment(\.dismiss) private var dismiss
     // HealthKit管理器
-    @EnvironmentObject var healthKitManager: BaseHealthKitManager
+    @EnvironmentObject var healthKitManager: HealthKitMoodManager
     
     // 查询自定义标签
     @Query private var customMoodTags: [CustomMoodTag]
@@ -77,6 +77,27 @@ struct AddRecordView: View {
                 
                 // 心情选择部分
                 Section {
+                    // State of Mind 原生界面按钮
+                    if #available(iOS 16.0, *) {
+                        Button(action: {
+                            if let healthKitManager = healthKitManager as? HealthKitMoodManager {
+                                healthKitManager.presentStateOfMindLogger()
+                            }
+                        }) {
+                            HStack {
+                                Image(systemName: "heart.text.square")
+                                    .foregroundColor(.blue)
+                                Text("使用系统心情记录")
+                                    .foregroundColor(.primary)
+                                Spacer()
+                                Image(systemName: "arrow.up.right.square")
+                                    .foregroundColor(.secondary)
+                            }
+                            .padding(.vertical, 8)
+                        }
+                        .buttonStyle(.borderless)
+                    }
+                    
                     LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 3), spacing: 10) {
                         // 预定义心情
                         ForEach(moods, id: \.0) { mood, color in
