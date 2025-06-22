@@ -13,13 +13,15 @@ import UIKit
  这个类负责与苹果HealthKit交互，管理心情数据
  主要功能：
  1. 请求HealthKit权限（符合官方最佳实践）
- 2. 使用HKStateOfMind API（iOS 17.0+）
+ 2. 使用HKStateOfMind API（iOS 18.0+）
  3. 从HealthKit读取State of Mind数据
  4. 将心情数据保存到HealthKit
- 5. 调用系统原生心情记录界面
+ 5. 应用内心情记录功能
  
- 系统要求：iOS 17.0+ （专注使用官方State of Mind API）
+ 系统要求：iOS 18.0+ （使用官方 HKStateOfMind API）
+ 注意：此实现不兼容 iOS 17，专门为 iOS 18+ 优化
  */
+@available(iOS 18.0, *)
 class HealthKitMoodManager: ObservableObject {
     
     // MARK: - 发布属性（用于UI更新）
@@ -38,10 +40,9 @@ class HealthKitMoodManager: ObservableObject {
     /// HealthKit数据存储实例
     private let healthStore = HKHealthStore()
     
-    /// State of Mind 数据类型（iOS 17.0+官方API）
-    private var stateOfMindType: HKCategoryType {
-        // 注意：stateOfMind在当前SDK中可能不可用，使用mindfulSession作为替代
-        return HKObjectType.categoryType(forIdentifier: .mindfulSession)!
+    /// State of Mind 数据类型（iOS 18.0+官方API）
+    private var stateOfMindType: HKObjectType {
+        return HKObjectType.stateOfMindType()
     }
     
     // MARK: - 初始化
@@ -64,14 +65,7 @@ class HealthKitMoodManager: ObservableObject {
     private func checkAuthorizationStatus() {
         guard isHealthKitAvailable else { return }
         
-        // iOS 17+: 检查权限
-        if #available(iOS 17.0, *) {
-            authorizationStatus = healthStore.authorizationStatus(for: stateOfMindType)
-        } else {
-            // 备用方案
-            let mindfulType = HKObjectType.categoryType(forIdentifier: .mindfulSession)!
-            authorizationStatus = healthStore.authorizationStatus(for: mindfulType)
-        }
+        authorizationStatus = healthStore.authorizationStatus(for: stateOfMindType)
         isAuthorized = authorizationStatus == .sharingAuthorized
         print("🔐 HealthKit授权状态: \(authorizationStatus.rawValue)")
     }
@@ -83,20 +77,10 @@ class HealthKitMoodManager: ObservableObject {
             return
         }
         
-        // iOS 17+: 使用权限
-        let typesToShare: Set<HKSampleType>
-        let typesToRead: Set<HKObjectType>
-        
-        if #available(iOS 17.0, *) {
-            typesToShare = [stateOfMindType]
-            typesToRead = [stateOfMindType]
-            print("✅ 请求权限（iOS 17+）")
-        } else {
-            let mindfulType = HKObjectType.categoryType(forIdentifier: .mindfulSession)!
-            typesToShare = [mindfulType]
-            typesToRead = [mindfulType]
-            print("✅ 请求权限（兼容模式）")
-        }
+        // iOS 18+: 使用 HKStateOfMind 权限
+        let typesToShare: Set<HKSampleType> = [stateOfMindType as! HKSampleType]
+        let typesToRead: Set<HKObjectType> = [stateOfMindType]
+        print("✅ 请求权限（iOS 18+ HKStateOfMind）")
         
         do {
             // 异步请求权限
@@ -141,15 +125,10 @@ class HealthKitMoodManager: ObservableObject {
         }
         
         do {
-            // 创建 State of Mind 样本
-            let sample = try createStateOfMindSampleWithValence(
-                valence: valence,
-                reflection: reflection
-            )
-            
-            // 保存到 HealthKit
-            try await healthStore.save(sample)
-            print("✅ 成功保存心情数据到HealthKit (valence: \(valence))")
+            // 使用官方 HKStateOfMind API
+            let stateOfMind = try createHKStateOfMind(valence: valence, reflection: reflection)
+            try await healthStore.save(stateOfMind)
+            print("✅ 成功保存 HKStateOfMind 到 HealthKit (valence: \(valence))")
             return true
             
         } catch {
@@ -185,29 +164,14 @@ class HealthKitMoodManager: ObservableObject {
         )
         
         return await withCheckedContinuation { continuation in
-            let query: HKSampleQuery
-            
-            if #available(iOS 17.0, *) {
-                // iOS 17+: 查询数据
-                query = HKSampleQuery(
-                    sampleType: stateOfMindType,
-                    predicate: predicate,
-                    limit: HKObjectQueryNoLimit,
-                    sortDescriptors: [sortDescriptor]
-                ) { _, samples, error in
-                    self.handleQueryResults(samples: samples, error: error, continuation: continuation)
-                }
-            } else {
-                // 备用方案
-                let mindfulType = HKObjectType.categoryType(forIdentifier: .mindfulSession)!
-                query = HKSampleQuery(
-                    sampleType: mindfulType,
-                    predicate: predicate,
-                    limit: HKObjectQueryNoLimit,
-                    sortDescriptors: [sortDescriptor]
-                ) { _, samples, error in
-                    self.handleQueryResults(samples: samples, error: error, continuation: continuation)
-                }
+            // iOS 18+: 查询 HKStateOfMind 数据
+            let query = HKSampleQuery(
+                sampleType: stateOfMindType as! HKSampleType,
+                predicate: predicate,
+                limit: HKObjectQueryNoLimit,
+                sortDescriptors: [sortDescriptor]
+            ) { _, samples, error in
+                self.handleQueryResults(samples: samples, error: error, continuation: continuation)
             }
             
             healthStore.execute(query)
@@ -233,8 +197,7 @@ class HealthKitMoodManager: ObservableObject {
     
     // MARK: - 数据保存（遵循Apple官方最佳实践）
     
-    /// 保存心情数据到HealthKit
-    /// 使用官方推荐的HKCategorySample创建方式
+       /// 保存心情数据到HealthKit（使用iOS 18+ HKStateOfMind API）
     func saveMood(mood: String, startTime: Date, endTime: Date, note: String, tags: [String]) async -> Bool {
         guard isAuthorized else {
             print("❌ HealthKit未授权，无法保存数据")
@@ -242,19 +205,16 @@ class HealthKitMoodManager: ObservableObject {
         }
         
         do {
-            // iOS 17+: 创建State of Mind样本
-            let sample = try createStateOfMindSample(
-                mood: mood,
-                startTime: startTime,
-                endTime: endTime,
-                note: note,
-                tags: tags
-            )
-            print("📝 创建State of Mind样本")
+            // 将心情字符串转换为valence值
+            let valence = mapMoodToValence(mood)
             
-            // 保存到HealthKit
-            try await healthStore.save(sample)
-            print("✅ 成功保存心情数据到HealthKit")
+            // 创建完整的反思内容
+            let fullReflection = buildFullReflection(note: note, tags: tags)
+            
+            // 使用官方 HKStateOfMind API
+            let stateOfMind = try createHKStateOfMind(valence: valence, reflection: fullReflection)
+            try await healthStore.save(stateOfMind)
+            print("✅ 成功保存 HKStateOfMind 到 HealthKit (mood: \(mood), valence: \(valence))")
             return true
             
         } catch {
@@ -268,30 +228,20 @@ class HealthKitMoodManager: ObservableObject {
     /// 将HealthKit样本转换为应用的心情记录格式
     private func convertHealthKitSamplesToMoodRecords(_ samples: [HKSample]) -> [MoodRecord] {
         return samples.compactMap { sample in
-            guard let categorySample = sample as? HKCategorySample else {
-                return nil
-            }
-            
-            // 提取基本信息
             let startTime = sample.startDate
             let endTime = sample.endDate
-            
-            // 从元数据中提取信息
             let metadata = sample.metadata ?? [:]
-            let note = metadata["note"] as? String ?? ""
+            let note = metadata["reflection"] as? String ?? metadata["user_notes"] as? String ?? ""
             
-            // 根据样本类型和值确定心情
             var mood: String
             var moodColor: String
             
-            if sample.sampleType == stateOfMindType {
-                // 从State of Mind数据中提取心情
-                mood = mapStateOfMindValueToMood(categorySample.value)
+            // iOS 18+: 专门处理 HKStateOfMind 对象
+            if let stateOfMind = sample as? HKStateOfMind {
+                mood = mapValenceToMood(stateOfMind.valence)
                 moodColor = getMoodColor(for: mood)
             } else {
-                // 从其他数据中提取（备用）
-                mood = extractMoodFromMetadata(metadata) ?? "一般"
-                moodColor = getMoodColor(for: mood)
+                return nil // 只处理 HKStateOfMind 对象
             }
             
             // 创建心情记录
@@ -307,140 +257,83 @@ class HealthKitMoodManager: ObservableObject {
         }
     }
     
-    /// 从元数据中提取心情信息
-    private func extractMoodFromMetadata(_ metadata: [String: Any]) -> String? {
-        // 尝试从不同的元数据字段提取心情信息
-        if let note = metadata["note"] as? String {
-            // 从备注中解析心情（格式：心情: 备注）
-            let components = note.components(separatedBy: ":")
-            if components.count > 1 {
-                return components[0].trimmingCharacters(in: .whitespaces)
-            }
-        }
-        return nil
-    }
-    
-    // MARK: - State of Mind API 方法（iOS 17+官方实现）
-    
-    /// 创建State of Mind样本（iOS 17+官方API）
-    private func createStateOfMindSample(
-        mood: String,
-        startTime: Date,
-        endTime: Date,
-        note: String,
-        tags: [String]
-    ) throws -> HKCategorySample {
-        
-        // 将应用的心情映射到HealthKit的State of Mind值
-        let stateOfMindValue = mapMoodToStateOfMindValue(mood)
-        
-        // 构建元数据
-        var metadata: [String: Any] = [:]
-        
-        // 添加备注
-        if !note.isEmpty {
-            metadata["note"] = note
-        }
-        
-        // 添加标签信息
-        if !tags.isEmpty {
-            metadata["tags"] = tags.joined(separator: ",")
-        }
-        
-        // 添加应用标识
-        metadata["source_app"] = "MinNote"
-        
-        return HKCategorySample(
-            type: stateOfMindType,
-            value: stateOfMindValue,
-            start: startTime,
-            end: endTime,
-            metadata: metadata.isEmpty ? nil : metadata
-        )
-    }
-    
-    /// 创建 State of Mind 样本（使用数值型 valence）
-    /// valence: -1.0 到 1.0，-1.0 = 非常不愉快，1.0 = 非常愉快
-    private func createStateOfMindSampleWithValence(
-        valence: Double,
-        reflection: String? = nil
-    ) throws -> HKCategorySample {
-        
-        // 将 valence (-1.0 到 1.0) 映射到 HealthKit 的 1-5 值
-        let stateOfMindValue = mapValenceToStateOfMindValue(valence)
-        
-        // 构建元数据
-        var metadata: [String: Any] = [:]
-        
-        // 添加反思内容
-        if let reflection = reflection, !reflection.isEmpty {
-            metadata["reflection"] = reflection
-        }
-        
-        // 添加原始 valence 值
-        metadata["valence"] = valence
-        
-        // 添加应用标识
-        metadata["source_app"] = "MinNote"
-        
-        let now = Date()
-        return HKCategorySample(
-            type: stateOfMindType,
-            value: stateOfMindValue,
-            start: now,
-            end: now,
-            metadata: metadata.isEmpty ? nil : metadata
-        )
-    }
-    
-    /// 将 valence 值(-1.0 到 1.0)映射到 HealthKit State of Mind 值(1-5)
-    private func mapValenceToStateOfMindValue(_ valence: Double) -> Int {
-        // 确保 valence 在有效范围内
+    /// 将 valence 值（-1.0 到 1.0）映射到应用的心情字符串
+    private func mapValenceToMood(_ valence: Double) -> String {
         let clampedValence = max(-1.0, min(1.0, valence))
         
-        // 映射到 1-5 范围
-        // -1.0 -> 1, -0.5 -> 2, 0.0 -> 3, 0.5 -> 4, 1.0 -> 5
-        let mapped = (clampedValence + 1.0) * 2.0 + 1.0
-        return Int(round(mapped))
-    }
-    
-    /// 将应用的心情字符串映射到HealthKit State of Mind值
-    /// Apple官方使用1-5的标准化值
-    private func mapMoodToStateOfMindValue(_ mood: String) -> Int {
-        // State of Mind值范围：1-5
-        // 1 = 非常不愉快, 2 = 略不愉快, 3 = 中性, 4 = 略愉快, 5 = 非常愉快
-        switch mood {
-        case "非常难过", "抑郁", "绝望":
-            return 1 // 非常不愉快
-        case "难过", "沮丧", "有点难过":
-            return 2 // 略不愉快
-        case "一般", "平静", "中性":
-            return 3 // 中性
-        case "开心", "愉快", "比较开心", "轻松":
-            return 4 // 略愉快
-        case "非常开心", "狂欢", "兴奋", "满足":
-            return 5 // 非常愉快
-        default:
-            return 3 // 默认中性
-        }
-    }
-    
-    /// 将HealthKit State of Mind值映射到应用的心情字符串
-    private func mapStateOfMindValueToMood(_ value: Int) -> String {
-        switch value {
-        case 1:
+        switch clampedValence {
+        case -1.0..<(-0.6):
             return "非常难过"
-        case 2:
+        case -0.6..<(-0.2):
             return "难过"
-        case 3:
+        case -0.2..<0.2:
             return "一般"
-        case 4:
+        case 0.2..<0.6:
             return "开心"
-        case 5:
+        case 0.6...1.0:
             return "非常开心"
         default:
             return "一般"
         }
+    }
+    
+    /// 构建完整的反思内容
+    private func buildFullReflection(note: String, tags: [String]) -> String? {
+        var reflectionParts: [String] = []
+        
+        if !note.isEmpty {
+            reflectionParts.append(note)
+        }
+        
+        if !tags.isEmpty {
+            reflectionParts.append("标签: \(tags.joined(separator: ", "))")
+        }
+        
+        return reflectionParts.isEmpty ? nil : reflectionParts.joined(separator: " | ")
+    }
+    
+    /// 将应用的心情字符串映射到valence值（-1.0 到 1.0）
+    private func mapMoodToValence(_ mood: String) -> Double {
+        switch mood {
+        case "非常难过", "抑郁", "绝望":
+            return -0.8
+        case "难过", "沮丧", "有点难过":
+            return -0.4
+        case "一般", "平静", "中性":
+            return 0.0
+        case "开心", "愉快", "比较开心", "轻松":
+            return 0.4
+        case "非常开心", "狂欢", "兴奋", "满足":
+            return 0.8
+        default:
+            return 0.0
+        }
+    }
+    
+    /// 创建官方 HKStateOfMind 对象（iOS 18+）
+    private func createHKStateOfMind(valence: Double, reflection: String? = nil) throws -> HKStateOfMind {
+        let now = Date()
+        
+        // 确保 valence 在有效范围内 (-1.0 到 1.0)
+        let clampedValence = max(-1.0, min(1.0, valence))
+        
+        // 创建元数据
+        var metadata: [String: Any] = [:]
+        if let reflection = reflection, !reflection.isEmpty {
+            metadata["user_notes"] = reflection
+        }
+        metadata["source_app"] = "MinNote"
+        metadata["valence_raw"] = valence
+        
+        // 创建 HKStateOfMind
+        return HKStateOfMind(
+            date: now,
+            kind: .momentaryEmotion,
+            valence: clampedValence,
+            labels: [],
+            associations: [],
+            metadata: metadata.isEmpty ? nil : metadata
+        )
     }
     
     // MARK: - 工具方法
@@ -494,7 +387,7 @@ class HealthKitMoodManager: ObservableObject {
         print("  - 设备支持: \(isHealthKitAvailable)")
         print("  - 授权状态: \(authorizationStatus)")
         print("  - 已授权: \(isAuthorized)")
-        print("  - 支持State of Mind: ✅ (iOS 17+)")
+        print("  - 支持State of Mind: ✅ (iOS 18+)")
         print("  - State of Mind授权: \(healthStore.authorizationStatus(for: stateOfMindType))")
     }
     

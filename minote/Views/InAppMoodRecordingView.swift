@@ -229,36 +229,54 @@ struct InAppMoodRecordingView: View {
     /// 根据 valence 值返回心情描述
     private var moodDescription: String {
         switch valence {
-        case -1.0..<(-0.6):
-            return "非常不愉快"
-        case -0.6..<(-0.2):
-            return "有些不愉快"
-        case -0.2..<0.2:
-            return "中性平静"
-        case 0.2..<0.6:
-            return "比较愉快"
         case 0.6...1.0:
-            return "非常愉快"
+            return "Pleasant"
+        case 0.2..<0.6:
+            return "Slightly Pleasant"
+        case -0.2..<0.2:
+            return "Neutral"
+        case -0.6..<(-0.2):
+            return "Slightly Unpleasant"
+        case -1.0..<(-0.6):
+            return "Unpleasant"
         default:
-            return "中性平静"
+            return "Neutral"
         }
     }
     
     /// 根据 valence 值返回对应的颜色
     private var moodColor: Color {
         switch valence {
-        case -1.0..<(-0.6):
-            return .red
-        case -0.6..<(-0.2):
-            return .orange
-        case -0.2..<0.2:
-            return .gray
-        case 0.2..<0.6:
-            return .blue
         case 0.6...1.0:
-            return .green
+            return Color(red: 0.2, green: 0.8, blue: 0.2) // 绿色
+        case 0.2..<0.6:
+            return Color(red: 0.4, green: 0.7, blue: 0.9) // 蓝色
+        case -0.2..<0.2:
+            return Color(red: 0.4, green: 0.8, blue: 0.9) // 青色
+        case -0.6..<(-0.2):
+            return Color(red: 1.0, green: 0.6, blue: 0.2) // 橙色
+        case -1.0..<(-0.6):
+            return Color(red: 0.9, green: 0.3, blue: 0.3) // 红色
         default:
             return .gray
+        }
+    }
+    
+    /// 根据 valence 值返回对应的图标
+    private var moodIcon: String {
+        switch valence {
+        case 0.6...1.0:
+            return "face.smiling"
+        case 0.2..<0.6:
+            return "face.smiling"
+        case -0.2..<0.2:
+            return "minus.circle"
+        case -0.6..<(-0.2):
+            return "face.dashed"
+        case -1.0..<(-0.6):
+            return "face.dashed"
+        default:
+            return "minus.circle"
         }
     }
     
@@ -269,9 +287,12 @@ struct InAppMoodRecordingView: View {
         isSaving = true
         
         Task {
+            // 构建完整的心情描述，包含程度和具体情绪
+            let fullMoodDescription = "\(moodDescription) - \(selectedEmotion)"
+            
             let success = await healthKitManager.saveInAppMood(
                 valence: valence,
-                reflection: reflection.isEmpty ? nil : reflection
+                reflection: reflection.isEmpty ? fullMoodDescription : "\(fullMoodDescription)\n\n\(reflection)"
             )
             
             await MainActor.run {
@@ -291,6 +312,34 @@ struct InAppMoodRecordingView: View {
                 }
             }
         }
+    }
+}
+
+// MARK: - 情绪按钮组件
+
+struct EmotionButton: View {
+    let title: String
+    let isSelected: Bool
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            Text(title)
+                .font(.body)
+                .foregroundColor(isSelected ? .white : .primary)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 12)
+                .frame(maxWidth: .infinity)
+                .background(
+                    RoundedRectangle(cornerRadius: 20)
+                        .fill(isSelected ? Color.primary : Color(.systemGray6))
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 20)
+                        .stroke(Color(.systemGray4), lineWidth: isSelected ? 0 : 1)
+                )
+        }
+        .buttonStyle(PlainButtonStyle())
     }
 }
 
